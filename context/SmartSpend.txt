@@ -1,0 +1,115 @@
+SmartSpend
+
+Propósito: aplicación que te permite ver finanzas, rendimiento de inversiones y en base a eso da recomendaciones financieras o de inversión. Puedes preguntarle sobre si conviene o no comprar un activo y en base a tus datos personales (propósito, dinero total, tipo de inversor (riesgos) y ubicación) y a investigación de noticias relevantes en línea recomienda o no comprar o invertir. 
+
+Flujo de uso: 
+1. Onboarding y Perfil de Riesgo: El usuario se autentica con Firebase, define su ubicación  y completa un test de perfil inversor (Conservador, Moderado, Agresivo). Estos datos quedan guardados - ver paso 3.
+2. Gestión de cartera: El usuario registra manualmente o descarga y sube un extracto de su broker (CSV/JSON) a la aplicación, simulando sus activos reales. Se genera un JSON que resume la cartera del usuario que se actualiza con cada cambio que el usuario haga. Este resumen se guarda automáticamente - ver paso 3.
+3. Permanencia de datos: Los Pasos 1 y 2 quedan guardados en la DB de la app en dos formas distintas simultáneamente. De forma remota en Firestore y de forma local en Drift (SQLite). Nota: durante la app siempre se va a preferir por un tema de eficiencia usar la base de datos local, en caso de que algo falle se harán consultas a la remota. Caso ideal: la DB local se usa para consultas en la app mientras que la remota como un backup seguro de los datos del usuario.
+4. Sincronización de métricas: Los datos se actualizan según decida el usuario (tiempo) usando FMP en los gráficos.
+5. Consulta con IA: El usuario hace una consulta a la IA sobre su inversiones (decidir comprar un activo, falta de estructura en su portafolio de inversiones, validez de una acción, etc).
+6. Generación de la respuesta: El LLM empieza a razonar y a enriquecerse (RAG Lite) usando el System Instruction de la app. El System Instruction pide al LLM revisar: prompt, reglas de respuesta, perfil inversor, resumen de cartera y noticias relevantes al prompt.
+7. Respuesta en Streaming: La IA genera la recomendación en la UI palabra por palabra, acompañada del disclaimer de responsabilidad.
+8. Paywall: Si el usuario supera el límite de consultas gratuitas, Stripe solicita el pago para desbloquear la versión Premium. Este cambio del estado de cuenta se guarda inmediatamente en DB - ver paso 3. Cambiar a versión premium está disponible en todo momento a partir del paso 1.
+
+Dependencias por pasos: 
+Paso 1: 
+
+firebase_auth + google_sign_in: Gestión de registro/inicio de sesión con credenciales de Google o correo.
+
+country_picker: Selector nativo UI para la ubicación del usuario (evita dependencias de geolocalización por GPS que requieren permisos invasivos en el sistema).
+
+flutter_dotenv: Trae .env variables para usar en el proyecto.
+
+Paso 2: 
+
+file_picker: Abre el explorador de archivos del sistema en iOS/Android para que el usuario seleccione el extracto de su broker (.csv o .json).
+
+csv: Parsea el flujo de texto de los archivos .csv importados y los convierte en matrices de datos en Dart para sanitizar los activos.
+
+path_provider: Permite acceder de forma segura a las rutas del almacenamiento interno del teléfono para leer los archivos cargados.
+
+Paso 3:
+
+drift + sqlite3_flutter_libs + path: Base de datos SQLite local type-safe. Es la Fuente Única de la Verdad (SSOT) en el dispositivo. (Nota: se eligió Drift en reemplazo de Isar, ya que Isar/isar_flutter_libs quedó discontinuado desde 2023 y era incompatible con el resto del toolchain moderno del proyecto.)
+
+drift_dev + build_runner (dev_dependencies): Generadores de código para compilar los esquemas de Drift a nivel de compilación.
+
+cloud_firestore: Base de datos remota en la nube utilizada exclusivamente como respaldo (backup) y sincronización secundaria.
+
+Paso 4: 
+
+dio: Cliente HTTP avanzado para consumir la API de Financial Modeling Prep (FMP). Permite configurar interceptores, reintentos automáticos y tiempos de espera (timeouts).
+
+fl_chart: Generación de gráficos vectoriales interactivos (líneas de tendencia de rendimiento y gráficos de torta para la distribución del portafolio).
+
+intl: Formateador de divisas ($1,250.50 USD), porcentajes e idioma según la región del usuario.
+
+Pasos 5, 6 y 7: 
+
+google_generative_ai: SDK oficial de Google para ejecutar consultas al modelo Gemini. Ofrece soporte nativo para respuestas en streaming (generateContentStream).
+
+flutter_markdown_plus: Renderiza el texto de la IA formateado en tiempo real (con negritas, listas y el disclaimer final) a medida que llegan los fragmentos de la respuesta. (Nota: se eligió flutter_markdown_plus en reemplazo de flutter_markdown, que quedó discontinuado.)
+
+Paso 7: 
+
+flutter_stripe: SDK oficial de Stripe para integrar la pasarela de pagos nativa (PaymentSheet) en la app y validar compras únicas o suscripciones a la versión Premium.
+
+Dependencias generales:
+firebase_core, flutter_svg (google logo), flutter_riverpod, riverpod_annotation, dartz, equatable, freezed_annotation,
+json_annotation, cloud_firestore, flutter_localization (intl).
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter,
+  flutter_lints,
+  build_runner,
+  freezed,
+  json_serializable,
+  riverpod_generator,
+  mocktail
+  
+Pantallas:
+1. Pantalla de login (id, email y contraseña/ google Oauth)
+2. Pantalla de onboarding, test de perfil de inversor (Primero un aviso para que complete el test con el boton de iniciarlo
+y luego el propio test) y selección de nacionalidad.
+3. Pantalla home: barra de búsqueda para encontrar activos. Gráficos de los activos que tiene el usuario,
+con la opción de subir un nuevo json/CSV. Si el usuario es nuevo y no tiene el portfolio armado, el botón
+de subida de portfolio está en el centro reemplazando los gráficos. Incluye barra lateral izquierda para 
+desplazarse entre las demás pantallas.
+4. Pantalla de LLM: esta pantalla tendrá un TextField para escribirle al modelo de LLM. Y en el espacio
+superior se generará la respuesta.
+5. Pantalla de cuenta: el logo de la cuenta se expondrá en la parte superior derecha del AppBar de Home, al
+clickearlo se llevará a esta pantalla que expondrá los datos básicos del usuario, junto con un botón de cambiar 
+de contraseña o cerrar sesión y un IconButton de configuración para cambiar l10n o theme.
+6. Pantalla de planes: en esta pantalla se verán los dos planes (Estandar y Premium) con la descripción de cada 
+uno y la opción de comprar cada uno. Si se selecciona el premium, en la misma pantalla, por un ScrollView se 
+deberán completar los datos de pago más abajo.
+
+Que hace cada directorio?
+Core/:
+database/: contendrá la lógica para la DB de Drift y de Firestore.
+env/: expondrá variables ambientales de la raiz del proyecto con flutter_dotenv.
+error/: definirá clases propias Failures para manejar con dartz en toda la app.
+l10n/: internacionalizacion ingles/español.
+network/: manejará las conexiones REST con dio.
+router/: manejará la redirección segun el estado de autenticación.
+theme/: ThemeData de la app, con esquema de colores y todo lo necesario.
+utils/: por ahora utilidades de plataforma, tal vez se necesiten más cosas. 
+Features:
+account/: feature del estado de cuenta
+ai_advisor/: feature de las consultas al LLM
+auth/: feature de autenticación,
+market/:se conecta con FMP para traer las métricas de activos actualizadas
+onboarding/:recolecta los datos de nacionalidad y perfil de inversor
+payment/: feature del pago del plan Premium
+portfolio/: feature del portfolio de inverisones del usuario
+
+Esquema de colores de la app: esquema de grises (blancos y claros para modo claro y negro y oscuros para modo
+oscuro) + color de marca (verde) para botónes y elementos destacados.
+
+Información extra: El proyecto usa clean architecture (domain, data y presentation(opcional) por feature), 
+principios SOLID, Riverpod como manejador de estado y soporta l10n (ingles y español) y presentación nativa
+Material y Cupertino via widgets en la capa de presentación que consultan el sistema operativo y en base a eso 
+se construyen. Si un widget no existe en cupertino, la siguiente opción será construirlo con Material pero
+aparentando ser Cupertino en la UI.

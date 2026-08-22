@@ -1,0 +1,56 @@
+name: smart_spend
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.1
+
+dependencies:
+  cloud_firestore: ^6.8.0
+  cloud_functions: ^6.3.6
+  country_picker: ^2.0.28
+  csv: ^8.0.0
+  dartz: ^0.10.1
+  dio: ^5.11.0
+  drift: ^2.34.3
+  equatable: ^2.1.0
+  file_picker: ^12.0.0
+  firebase_auth: ^6.5.7
+  firebase_core: ^4.13.0
+  fl_chart: ^1.2.0
+  flutter:
+    sdk: flutter
+  flutter_dotenv: ^6.0.1
+  flutter_localizations:
+    sdk: flutter
+  flutter_markdown_plus: ^1.0.12
+  flutter_riverpod: ^3.3.2
+  flutter_stripe: ^14.0.0
+  flutter_svg: ^2.3.0
+  freezed_annotation: ^3.1.0
+  google_generative_ai: ^0.4.7
+  google_sign_in: ^7.2.0
+  intl: ^0.20.3
+  json_annotation: ^4.12.0
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  riverpod_annotation: ^4.0.6
+  sqlite3_flutter_libs: ^0.6.0+eol
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  build_runner: ^2.16.0
+  freezed: ^4.0.0
+  json_serializable: ^6.14.1
+  riverpod_generator: ^4.0.8
+  mocktail: ^1.0.5
+  drift_dev: ^2.34.5
+
+flutter:
+  uses-material-design: true
+  generate: true
+  assets: 
+    - assets/
