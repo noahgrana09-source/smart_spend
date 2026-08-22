@@ -1,0 +1,37 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Fields only the Stripe backend (Cloud Functions, Admin SDK — bypasses
+    // these rules entirely) is allowed to set. Keeping them out of client
+    // writes is what makes createPremiumPaymentSheet/stripeWebhook's
+    // paywall trustworthy: a client can never self-grant Premium or rewrite
+    // its own Stripe Customer link straight through the Firestore SDK.
+    function serverOwnedFields() {
+      return ['isPremium', 'stripeCustomerId', 'premiumSince'];
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+        && !request.resource.data.keys().hasAny(serverOwnedFields());
+
+      allow update: if isOwner(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(serverOwnedFields());
+
+      allow delete: if false;
+    }
+
+    // Deny everything else by default until its schema/rules are defined.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -120,7 +120,8 @@ incompatible con el toolchain moderno del proyecto.)
 **Paso 8**: `flutter_stripe`, `cloud_functions` (llama a una Cloud Function
 que crea el PaymentIntent de Stripe; la secret key de Stripe vive solo en
 Functions, nunca en el cliente — no está en el `.txt` original, se sumó al
-decidir el approach de backend).
+decidir el approach de backend). Premium es **pago único** (no suscripción),
+USD 9.99.
 
 **Generales**: `firebase_core`, `flutter_svg` (logo Google), `flutter_riverpod`,
 `riverpod_annotation`, `dartz`, `equatable`, `freezed_annotation`,
@@ -142,11 +143,28 @@ decidir el approach de backend).
   se escribió código de `core/`). `lib/main.dart` solo inicializa Firebase
   con un Hello World.
 - No hay `assets/` cargados todavía pese a estar declarado en `pubspec.yaml`.
-- **Firebase (`smartspend-35d0e`) está en plan Spark**, bloqueado para usar
-  Secret Manager/Cloud Functions con secrets hasta upgradear a Blaze
-  (pay-as-you-go). El usuario está esperando para pagar ese upgrade; hasta
-  entonces, la Cloud Function de Stripe (creación del PaymentIntent) queda
-  pendiente de deploy — no bloquea el resto del desarrollo.
+- **Firebase (`smartspend-35d0e`) está en plan Blaze** (el upgrade desde
+  Spark ya se hizo). Secret Manager y Cloud Functions con secrets
+  funcionan sin bloqueo.
+- **Backend de Stripe deployado y funcionando** en `functions/src/index.ts`
+  (`us-central1`):
+  - `createPremiumPaymentSheet` (callable, v2): verifica auth, crea/reusa
+    el Stripe Customer del usuario (guardado en Firestore
+    `users/{uid}.stripeCustomerId`), y devuelve `paymentIntentClientSecret`
+    + `ephemeralKeySecret` + `customerId` para que el cliente abra el
+    `PaymentSheet` de `flutter_stripe`. Monto fijo: USD 9.99 (999 centavos),
+    pago único. Rechaza (`already-exists`) si el usuario ya es Premium.
+  - `stripeWebhook` (https, v2): verifica la firma del evento y recién ahí
+    persiste `isPremium: true` + `premiumSince` en Firestore al recibir
+    `payment_intent.succeeded` — el estado Premium **no** lo setea el
+    cliente directamente, para que no se pueda falsear un pago exitoso.
+    URL: `https://us-central1-smartspend-35d0e.cloudfunctions.net/stripeWebhook`,
+    registrado en el Dashboard de Stripe escuchando ese evento.
+  - Secrets en Secret Manager: `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`
+    (ambos con valores reales, cargados y en uso).
+  - Política de limpieza de Artifact Registry configurada en `us-central1`
+    (borra imágenes de builds viejas a las 24hs) para no acumular costo de
+    storage en cada deploy.
 - Repo Git inicializado y subido a GitHub como privado (cuenta
   `noahgrana09-source`).
 
