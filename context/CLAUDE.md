@@ -14,6 +14,11 @@ total) con investigación de noticias en línea, vía un LLM (Gemini).
   correr `build_runner`, instalar dependencias, `git commit`/`push`, etc.):
   **siempre pedir confirmación antes de ejecutar**, incluso si parecen
   triviales.
+- **Commits de git**: cuando se pida "escribir el commit", el agente
+  redacta **solo el mensaje** como texto — nunca ejecuta `git add`,
+  `git commit` ni ningún otro comando de git. El usuario revisa el diff y
+  corre los comandos él mismo. Recién ejecutar si el usuario lo pide con un
+  verbo explícito de acción (ej. "corré el commit", "hacé commit de esto").
 
 ## Flujo de uso (8 pasos)
 

@@ -19,19 +19,19 @@ setGlobalOptions({maxInstances: 10});
 // Stripe secret key lives only here (Secret Manager), never on the client.
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 
-// Plan Premium: pago único (no suscripción).
+// Premium Plan: one-time payment (not a subscription).
 const PREMIUM_PRICE_CENTS = 999; // USD 9.99
 const PREMIUM_CURRENCY = "usd";
 
 /**
- * Callable invocada desde la app (paso 8) al elegir Premium.
- * Crea/recupera el Stripe Customer del usuario, una Ephemeral Key y un
- * PaymentIntent para el monto fijo del plan Premium, y devuelve lo
- * necesario para que `flutter_stripe` abra el `PaymentSheet`.
+ * Callable invoked from the app (step 8) when choosing Premium.
+ * Creates/retrieves the user's Stripe Customer, an Ephemeral Key, and a
+ * PaymentIntent for the fixed amount of the Premium plan, and returns what
+ * is needed for `flutter_stripe` to open the `PaymentSheet`.
  *
- * El estado de cuenta (Premium) NO se marca acá: se confirma vía webhook
- * (`stripeWebhook`) cuando Stripe reporta el pago como exitoso, para que
- * un cliente no pueda auto-otorgarse Premium sin pagar.
+ * The account status (Premium) is NOT marked here: it is confirmed via webhook
+ * (`stripeWebhook`) when Stripe reports the payment as successful, so that
+ * a client cannot self-grant Premium without paying.
  */
 export const createPremiumPaymentSheet = onCall(
   {secrets: [stripeSecretKey]},
@@ -39,7 +39,7 @@ export const createPremiumPaymentSheet = onCall(
     if (!request.auth) {
       throw new HttpsError(
         "unauthenticated",
-        "Debés iniciar sesión para continuar."
+        "You must be logged in to continue."
       );
     }
 
@@ -55,7 +55,7 @@ export const createPremiumPaymentSheet = onCall(
     if (userSnap.data()?.isPremium === true) {
       throw new HttpsError(
         "already-exists",
-        "Este usuario ya tiene el plan Premium."
+        "This user already has the Premium plan."
       );
     }
 
@@ -89,15 +89,15 @@ export const createPremiumPaymentSheet = onCall(
   }
 );
 
-// El webhook de Stripe necesita el secret propio de ese endpoint (distinto
-// de la secret key general) para verificar la firma de cada evento.
+// The Stripe webhook needs the secret specific to that endpoint (distinct
+// from the general secret key) to verify the signature of each event.
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
 
 /**
- * Webhook de Stripe. Escucha `payment_intent.succeeded` para el plan
- * Premium y recién ahí persiste el cambio de estado de cuenta en
- * Firestore (paso 3 / paso 8), evitando que el cliente pueda simular un
- * pago exitoso.
+ * Stripe Webhook. Listens for `payment_intent.succeeded` for the Premium
+ * plan and only then persists the account status change in
+ * Firestore (step 3 / step 8), preventing the client from simulating a
+ * successful payment.
  */
 export const stripeWebhook = onRequest(
   {secrets: [stripeSecretKey, stripeWebhookSecret]},
@@ -113,7 +113,7 @@ export const stripeWebhook = onRequest(
         stripeWebhookSecret.value()
       );
     } catch (err) {
-      logger.error("Firma de webhook de Stripe inválida", err);
+      logger.error("Invalid Stripe webhook signature", err);
       res.status(400).send("Invalid signature");
       return;
     }
@@ -130,7 +130,7 @@ export const stripeWebhook = onRequest(
           },
           {merge: true}
         );
-        logger.info(`Usuario ${uid} pasó a Premium.`);
+        logger.info(`User ${uid} upgraded to Premium.`);
       }
     }
 
