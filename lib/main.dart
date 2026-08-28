@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'core/env/env.dart';
+import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'firebase_options.dart';
 
@@ -10,19 +12,22 @@ void main() async {
   await Env.load();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(const SmartSpend());
+  runApp(const ProviderScope(child: SmartSpend()));
 }
 
-class SmartSpend extends StatelessWidget {
+class SmartSpend extends ConsumerWidget {
   const SmartSpend({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(appRouterProvider);
+
+    return MaterialApp.router(
       theme: AppTheme.light,
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.system,
-      home: const Scaffold(body: Center(child: Text('Hello World!'))),
+      routerConfig: router,
+      builder: (context, child) => AppStateListener(child: child),
     );
   }
 }

@@ -21,10 +21,7 @@ GoRouter appRouter(Ref ref) {
   return GoRouter(
     initialLocation: _pathFor(const AppState.unauthenticated()),
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginScreen(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
