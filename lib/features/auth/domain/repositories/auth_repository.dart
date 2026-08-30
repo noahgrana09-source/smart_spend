@@ -44,4 +44,12 @@ abstract class AuthRepository {
 
   /// Returns the currently authenticated user, or `null` if not signed in.
   UserEntity? getCurrentUser();
+
+  /// Watches the signed-in user's profile from the local Drift cache — a
+  /// best-effort mirror of Firestore kept for offline reads elsewhere in
+  /// the app (e.g. showing the display name on Home). It is not the
+  /// source of truth for *whether* the user is authenticated — that's
+  /// Firebase Auth's session, reflected by [getCurrentUser] and the sign
+  /// in/out methods above. Emits `null` when there's nothing cached yet.
+  Stream<UserEntity?> watchCurrentUser();
 }

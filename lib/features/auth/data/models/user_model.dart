@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:firebase_auth/firebase_auth.dart' as firebase;
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import '../../../../core/database/app_database.dart';
 import '../../domain/entities/user_entity.dart';
 
 part 'user_model.freezed.dart';
@@ -84,6 +86,31 @@ abstract class UserModel with _$UserModel {
       'isEmailVerified': isEmailVerified,
       'createdAt': Timestamp.fromDate(createdAt),
     };
+  }
+
+  /// Creates a [UserModel] from a cached Drift [UserProfile] row.
+  factory UserModel.fromDrift(UserProfile row) {
+    return UserModel(
+      uid: row.uid,
+      email: row.email,
+      displayName: row.displayName,
+      photoUrl: row.photoUrl,
+      isEmailVerified: row.isEmailVerified,
+      createdAt: row.createdAt,
+    );
+  }
+
+  /// Converts this [UserModel] to a [UserProfilesCompanion] for
+  /// [UserProfileDao.saveUser].
+  UserProfilesCompanion toDriftCompanion() {
+    return UserProfilesCompanion.insert(
+      uid: uid,
+      email: email,
+      displayName: Value(displayName),
+      photoUrl: Value(photoUrl),
+      isEmailVerified: Value(isEmailVerified),
+      createdAt: createdAt,
+    );
   }
 
   /// Converts this [UserModel] to a domain [UserEntity].

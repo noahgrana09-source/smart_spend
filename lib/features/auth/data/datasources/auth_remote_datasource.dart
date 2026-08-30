@@ -84,6 +84,12 @@ abstract class AuthRemoteDataSource {
 
   /// Returns the currently authenticated user, or `null` if not signed in.
   UserModel? getCurrentUser();
+
+  /// Reads the `users/{uid}` document directly from Firestore, or `null`
+  /// if it doesn't exist. Used by [AuthRepositoryImpl] to backfill the
+  /// local Drift cache when it's empty but a Firebase Auth session is
+  /// still alive (fresh install, cleared local database, etc.).
+  Future<UserModel?> fetchUserProfile(String uid);
 }
 
 /// Implementation of [AuthRemoteDataSource] using Firebase Auth and Google Sign-In.
@@ -272,6 +278,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     final User? user = _firebaseAuth.currentUser;
     if (user == null) return null;
     return UserModel.fromFirebaseUser(user);
+  }
+
+  @override
+  Future<UserModel?> fetchUserProfile(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    if (!doc.exists) return null;
+    return UserModel.fromFirestore(doc);
   }
 
   /// Best-effort rollback: deletes [user] if the account was left
