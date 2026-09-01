@@ -44,28 +44,11 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  @override
-  Stream<Either<Failure, UserEntity>> get googleSignInEvents {
-    return _remoteDataSource.googleSignInEvents.transform(
-      StreamTransformer.fromHandlers(
-        handleData: (userModel, sink) {
-          unawaited(_cacheLocally(userModel));
-          sink.add(Right(userModel.toEntity()));
-        },
-        handleError: (error, stackTrace, sink) =>
-            sink.add(Left(_mapGoogleSignInError(error))),
-      ),
-    );
-  }
-
-  /// Maps anything [AuthRemoteDataSource.signInWithGoogle] or
-  /// [AuthRemoteDataSource.googleSignInEvents] can throw to a [Failure].
-  /// Shared by both so the two Google sign-in entry points (the explicit
-  /// call and the web-rendered-button stream) report failures the same
-  /// way. Catches non-[Exception] throwables too (e.g. an [Error] from a
-  /// misconfigured platform SDK) so callers always get a [Failure] back
-  /// instead of an unhandled rejection that would leave the UI stuck in
-  /// a loading state forever.
+  /// Maps anything [AuthRemoteDataSource.signInWithGoogle] can throw to a
+  /// [Failure]. Catches non-[Exception] throwables too (e.g. an [Error]
+  /// from a misconfigured platform SDK) so callers always get a
+  /// [Failure] back instead of an unhandled rejection that would leave
+  /// the UI stuck in a loading state forever.
   Failure _mapGoogleSignInError(Object error) {
     return switch (error) {
       FirebaseAuthException e => AuthFailure(

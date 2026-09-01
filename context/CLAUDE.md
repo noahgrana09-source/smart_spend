@@ -63,14 +63,26 @@ total) con investigación de noticias en línea, vía un LLM (Gemini).
 ## Estructura de directorios
 
 `lib/core/`:
-- `database/`: lógica de Drift y Firestore.
-- `env/`: variables de entorno (`flutter_dotenv`).
-- `error/`: `Failure`s propias para manejar errores con `dartz`.
-- `l10n/`: internacionalización es/en.
-- `network/`: conexiones REST con `dio`.
-- `router/`: redirección según estado de autenticación.
-- `theme/`: `ThemeData`, esquema de colores.
-- `utils/`: utilidades varias (por ahora, de plataforma).
+- `database/`: conexión única Drift/SQLite (`AppDatabase`), con `tables/` y
+  `daos/` adentro; `sync_repository.dart` define el contrato offline-first
+  (Drift SSOT + push best-effort a Firestore) que cada feature implementa.
+- `env/`: acceso tipado a variables de entorno (`Env`, `flutter_dotenv`).
+- `error/`: jerarquía `Failure` (dartz `Either`) — `ServerFailure`,
+  `AuthFailure`, `GoogleSignInFailure`, `NetworkFailure`,
+  `UserPersistenceFailure`.
+- `l10n/`: internacionalización es/en. **Carpeta vacía todavía** (no hay
+  `.arb`), aunque `generate: true` ya está en `pubspec.yaml`.
+- `network/`: `DioClient` (instancia `dio` compartida) + `NetworkErrorMapper`
+  (`DioException` → `Failure`).
+- `router/`: `GoRouter` (`go_router`). La navegación **no** usa
+  `GoRouter.redirect`: `AppStateListener` (montado como `builder` de
+  `MaterialApp.router`) observa `appStateProvider` y llama `context.go` en
+  cada cambio de estado.
+- `state/`: estados globales `freezed` (`AppState`, `PaymentState`) y sus
+  notifiers Riverpod (`AppStateNotifier`, `PaymentStateNotifier`).
+- `theme/`: `AppTheme` (light/dark) y `AppTextStyles`.
+- `usecases/`: contratos base `UseCase` / `StreamUseCase` / `NoParams`.
+- `utils/`: utilidades varias (por ahora, detección de plataforma).
 
 `lib/features/`:
 - `account/`: estado de cuenta.
@@ -106,6 +118,29 @@ de marca verde para botones y elementos destacados. **El hex exacto del verde
 todavía no está definido** — pendiente de decidir durante el desarrollo del
 theme.
 
+## Pendientes / decisiones de diseño
+
+- **Reconciliación local↔remoto (offline-first).** En `auth` la DB local es
+  best-effort: si la escritura en Drift falla, el login no falla igual
+  (Firebase Auth/Firestore son la fuente de verdad) y **no se tipa el
+  error** en el datasource local. Para el resto de los features, cuando la
+  persistencia local falle la estrategia es **reconciliar por presencia**,
+  no por tipo de error: al leer, si la fila no existe en Drift se rellena
+  desde Firestore. Matices a cubrir en la implementación:
+  - "Existe" no implica "está al día": la tabla lleva un marcador de
+    frescura (`updatedAt` o una columna `dirty`/`pending`) para detectar
+    filas desactualizadas por un update local fallido.
+  - Igual hace falta **un** `try/catch` genérico (sin tipar) como fallback
+    "lectura local falló → leo de remota", para el caso de DB corrupta.
+  - La reconciliación se dispara en momentos definidos (arranque de app,
+    login, pull-to-refresh, o caché local vacía), **nunca en cada lectura**
+    (un read a Firestore por consulta choca con el enfoque offline-first y
+    suma costo).
+  - Vive una sola vez en `sync_repository.dart` / un helper compartido, no
+    duplicada por feature.
+  - Implementar cuando llegue el primer feature que lo necesite
+    (`portfolio` / `account`).
+
 ## Dependencias por paso
 
 **Paso 1**: `firebase_auth`, `google_sign_in`, `country_picker`,
@@ -135,19 +170,46 @@ USD 9.99.
 **Dev**: `flutter_test`, `flutter_lints`, `build_runner`, `freezed`,
 `json_serializable`, `riverpod_generator`, `mocktail`, `drift_dev`.
 
-## Estado actual del proyecto (2026-08-22)
+## Estado actual del proyecto (2026-08-31)
 
-- `pubspec.yaml` tiene **todas** las dependencias de arriba agregadas y
-  resolviendo limpio (`flutter pub get` sin conflictos).
-- Flutter/Dart actualizados: Flutter 3.47.1 / Dart 3.13.1 (SDK global de la
-  máquina, compartido con otros 3 proyectos de portfolio del usuario que ya
-  no se tocan — no representa riesgo).
-- `.env.example` creado con `GEMINI_API_KEY`, `FMP_API_KEY`,
+- `pubspec.yaml` con **todas** las dependencias resolviendo limpio. Sumadas
+  desde el estado anterior: `go_router ^18`, `flutter_riverpod ^3.3` +
+  `riverpod_annotation ^4` + `riverpod_generator ^4`. Constraint del SDK
+  Dart: `^3.11.1` (SDK global de la máquina, compartido con otros 3
+  proyectos de portfolio ya inactivos — no representa riesgo).
+- `.env.example` con `GEMINI_API_KEY`, `FMP_API_KEY`,
   `STRIPE_PUBLISHABLE_KEY`. `.env` real existe local (vacío, gitignored).
-- `lib/core/*` y `lib/features/*` siguen siendo carpetas vacías (todavía no
-  se escribió código de `core/`). `lib/main.dart` solo inicializa Firebase
-  con un Hello World.
-- No hay `assets/` cargados todavía pese a estar declarado en `pubspec.yaml`.
+- **`lib/core/` implementado** en todas sus carpetas salvo `l10n/` (ver
+  *Estructura de directorios*): env, error, network, router, state, theme,
+  usecases, utils y database (Drift `AppDatabase`, `UserProfileDao` + tabla,
+  y el contrato `SyncRepository`).
+- **`lib/main.dart`**: carga `Env`, inicializa Firebase y monta
+  `ProviderScope` + `MaterialApp.router` con `AppTheme` y `AppStateListener`.
+- **Feature `auth`** es el único con lógica real:
+  - `domain/`: `UserEntity`, contrato `AuthRepository`, y usecases
+    `getCurrentUser`, `signInWithEmail`, `signInWithGoogle`, `signOut`,
+    `signUpWithEmail`, `watchCurrentUser`.
+  - `data/`: `UserModel` (freezed; `fromFirebaseUser` / `fromFirestore` /
+    `fromDrift` / `toDriftCompanion`), `AuthRemoteDataSource` (Firebase Auth
+    + Firestore, con excepciones tipadas `AuthDataSourceException` /
+    `UserPersistenceException` y rollback de la cuenta recién creada si
+    falla la persistencia del perfil), `AuthLocalDataSource` (caché de
+    lectura Drift, best-effort, sin tipar errores) y `AuthRepositoryImpl`
+    (orquesta ambos: cachea local en cada auth exitosa y hace backfill
+    cache-aside desde Firestore cuando la local está vacía).
+  - `presentation/`: solo `login_screen.dart`.
+  - Tests: suite completa de `domain` + `data` (usecases, repo, model,
+    datasources).
+- **Features `onboarding` y `portfolio`**: solo un stub de pantalla en
+  `presentation/` cada uno. `account`, `ai_advisor`, `market` y `payment`
+  todavía sin crear.
+- **`assets/`**: carpeta vacía pese a estar declarada en `pubspec.yaml`.
+- **Ramas**: `staging` va 2 commits adelante de `master` (`fd4bfca`,
+  `d5deec9`). Hay cambios **sin commitear** en curso: mover
+  `UserProfileDao` + tabla de `features/auth/data/local/` a
+  `core/database/`, y quitar el código web-only de `auth`
+  (`googleSignInEvents`, client ID web, `watch_google_sign_in_events_usecase`)
+  ya que el target es solo Android/iOS.
 - **Firebase (`smartspend-35d0e`) está en plan Blaze** (el upgrade desde
   Spark ya se hizo). Secret Manager y Cloud Functions con secrets
   funcionan sin bloqueo.

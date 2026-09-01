@@ -1,0 +1,30 @@
+{
+  "@@locale": "es",
+
+  "loginTitle": "Iniciar sesión",
+  "registerTitle": "Crear cuenta",
+
+  "emailLabel": "Correo",
+  "passwordLabel": "Contraseña",
+  "nameLabel": "Nombre",
+  "confirmPasswordLabel": "Confirmar contraseña",
+
+  "signInButton": "Iniciar sesión",
+  "registerButton": "Crear cuenta",
+  "googleButton": "Continuar con Google",
+
+  "goToRegister": "¿No tenés cuenta? Registrate",
+  "goToLogin": "¿Ya tenés cuenta? Iniciá sesión",
+
+  "validationEmailEmpty": "Ingresá tu correo",
+  "validationEmailInvalid": "Ingresá un correo válido",
+  "validationPasswordEmpty": "Ingresá tu contraseña",
+  "validationPasswordTooShort": "La contraseña debe tener al menos {min} caracteres",
+  "validationNameEmpty": "Ingresá tu nombre",
+  "validationConfirmPasswordEmpty": "Repetí tu contraseña",
+  "validationConfirmPasswordMismatch": "Las contraseñas no coinciden",
+
+  "errorInvalidCredentials": "Correo o contraseña incorrectos",
+  "errorEmailAlreadyInUse": "Ya existe una cuenta con este correo",
+  "errorGeneric": "Algo salió mal. Probá de nuevo."
+}

@@ -1,0 +1,35 @@
+{
+  "@@locale": "en",
+
+  "loginTitle": "Sign in",
+  "registerTitle": "Create account",
+
+  "emailLabel": "Email",
+  "passwordLabel": "Password",
+  "nameLabel": "Name",
+  "confirmPasswordLabel": "Confirm password",
+
+  "signInButton": "Sign in",
+  "registerButton": "Create account",
+  "googleButton": "Continue with Google",
+
+  "goToRegister": "Don't have an account? Sign up",
+  "goToLogin": "Already have an account? Sign in",
+
+  "validationEmailEmpty": "Enter your email",
+  "validationEmailInvalid": "Enter a valid email",
+  "validationPasswordEmpty": "Enter your password",
+  "validationPasswordTooShort": "Password must be at least {min} characters",
+  "@validationPasswordTooShort": {
+    "placeholders": {
+      "min": { "type": "int" }
+    }
+  },
+  "validationNameEmpty": "Enter your name",
+  "validationConfirmPasswordEmpty": "Repeat your password",
+  "validationConfirmPasswordMismatch": "Passwords don't match",
+
+  "errorInvalidCredentials": "Wrong email or password",
+  "errorEmailAlreadyInUse": "An account with this email already exists",
+  "errorGeneric": "Something went wrong. Please try again."
+}

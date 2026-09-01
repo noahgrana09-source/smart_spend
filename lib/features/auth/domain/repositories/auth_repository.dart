@@ -14,12 +14,6 @@ abstract class AuthRepository {
   /// Returns [UserEntity] on success or a [Failure] on error.
   Future<Either<Failure, UserEntity>> signInWithGoogle();
 
-  /// Emits a result each time a Google sign-in completes outside of an
-  /// explicit [signInWithGoogle] call — specifically, on web, where the
-  /// rendered Google button (not a widget we control) drives the whole
-  /// flow and the result only surfaces through this stream.
-  Stream<Either<Failure, UserEntity>> get googleSignInEvents;
-
   /// Signs in the user with email and password credentials.
   ///
   /// Returns [UserEntity] on success or a [Failure] on error.

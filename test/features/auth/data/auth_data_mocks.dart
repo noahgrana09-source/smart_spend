@@ -4,7 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:smart_spend/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:smart_spend/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:smart_spend/features/auth/data/local/user_profile_dao.dart';
+import 'package:smart_spend/core/database/daos/user_profile_dao.dart';
 
 class MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
 

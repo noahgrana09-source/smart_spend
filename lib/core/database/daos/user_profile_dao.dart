@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import '../../../../core/database/app_database.dart';
-import 'user_profile_table.dart';
+import '../app_database.dart';
+import '../tables/user_profile_table.dart';
 
 part 'user_profile_dao.g.dart';
 

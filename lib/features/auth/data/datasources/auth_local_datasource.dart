@@ -1,4 +1,4 @@
-import '../local/user_profile_dao.dart';
+import '../../../../core/database/daos/user_profile_dao.dart';
 import '../models/user_model.dart';
 
 /// Local (Drift) cache of the signed-in user's profile.
