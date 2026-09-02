@@ -9,68 +9,83 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get loginTitle => 'Iniciar sesión';
+  String get authLoginTitle => 'Iniciar sesión';
 
   @override
-  String get registerTitle => 'Crear cuenta';
+  String get authRegisterTitle => 'Crear cuenta';
 
   @override
-  String get emailLabel => 'Correo';
+  String get authEmailLabel => 'Correo';
 
   @override
-  String get passwordLabel => 'Contraseña';
+  String get authPasswordLabel => 'Contraseña';
 
   @override
-  String get nameLabel => 'Nombre';
+  String get authNameLabel => 'Nombre';
 
   @override
-  String get confirmPasswordLabel => 'Confirmar contraseña';
+  String get authConfirmPasswordLabel => 'Confirmar contraseña';
 
   @override
-  String get signInButton => 'Iniciar sesión';
+  String get authSignInButton => 'Iniciar sesión';
 
   @override
-  String get registerButton => 'Crear cuenta';
+  String get authRegisterButton => 'Crear cuenta';
 
   @override
-  String get googleButton => 'Continuar con Google';
+  String get authGoogleButton => 'Continuar con Google';
 
   @override
-  String get goToRegister => '¿No tenés cuenta? Registrate';
+  String get authGoToRegister => '¿No tenés cuenta? Registrate';
 
   @override
-  String get goToLogin => '¿Ya tenés cuenta? Iniciá sesión';
+  String get authGoToLogin => '¿Ya tenés cuenta? Iniciá sesión';
 
   @override
-  String get validationEmailEmpty => 'Ingresá tu correo';
+  String get authValidationEmailEmpty => 'Ingresá tu correo';
 
   @override
-  String get validationEmailInvalid => 'Ingresá un correo válido';
+  String get authValidationEmailInvalid => 'Ingresá un correo válido';
 
   @override
-  String get validationPasswordEmpty => 'Ingresá tu contraseña';
+  String get authValidationPasswordEmpty => 'Ingresá tu contraseña';
 
   @override
-  String validationPasswordTooShort(int min) {
+  String authValidationPasswordTooShort(int min) {
     return 'La contraseña debe tener al menos $min caracteres';
   }
 
   @override
-  String get validationNameEmpty => 'Ingresá tu nombre';
+  String get authValidationPasswordTooCommon =>
+      'Esa contraseña es demasiado común, elegí otra';
 
   @override
-  String get validationConfirmPasswordEmpty => 'Repetí tu contraseña';
+  String get authValidationPasswordContainsIdentity =>
+      'La contraseña no puede contener tu correo ni patrones obvios';
 
   @override
-  String get validationConfirmPasswordMismatch =>
+  String get authValidationNameEmpty => 'Ingresá tu nombre';
+
+  @override
+  String get authValidationConfirmPasswordEmpty => 'Repetí tu contraseña';
+
+  @override
+  String get authValidationConfirmPasswordMismatch =>
       'Las contraseñas no coinciden';
 
   @override
-  String get errorInvalidCredentials => 'Correo o contraseña incorrectos';
+  String get authErrorInvalidCredentials => 'Correo o contraseña incorrectos';
 
   @override
-  String get errorEmailAlreadyInUse => 'Ya existe una cuenta con este correo';
+  String get authErrorEmailAlreadyInUse =>
+      'Ya existe una cuenta con este correo';
 
   @override
-  String get errorGeneric => 'Algo salió mal. Probá de nuevo.';
+  String get authErrorGeneric => 'Algo salió mal. Probá de nuevo.';
+
+  @override
+  String get authPasswordStrengthWeak => 'Contraseña débil';
+
+  @override
+  String get authPasswordStrengthStrong => 'Contraseña fuerte';
 }

@@ -31,6 +31,25 @@ class AuthNotifier extends _$AuthNotifier {
   /// so a leftover error from the other screen doesn't show on entry.
   void reset() => state = const AuthState.normal();
 
+  /// Feature bootstrap, called once from `main` before the first frame
+  /// (not from [build], so it can safely advance `appStateProvider`). A
+  /// live Firebase Auth session moves the app straight to
+  /// [AppState.authenticated]; with no session nothing changes and the
+  /// router shows login. Any failure is swallowed — treat it as "no
+  /// session".
+  void restoreSession() {
+    try {
+      final user = ref.read(getCurrentUserUseCaseProvider).call();
+      if (user != null) {
+        ref
+            .read(appStateProvider.notifier)
+            .update(const AppState.authenticated());
+      }
+    } catch (_) {
+      // No session.
+    }
+  }
+
   Future<void> submitSignIn({
     required String email,
     required String password,
@@ -63,6 +82,30 @@ class AuthNotifier extends _$AuthNotifier {
   Future<void> submitGoogle() {
     return _run(
       () => ref.read(signInWithGoogleUseCaseProvider).call(const NoParams()),
+    );
+  }
+
+  /// Invoked from the account screen. Success returns the app to
+  /// [AppState.unauthenticated]; a failure leaves the global state where
+  /// it is (you stay signed in) and surfaces a general [AuthState.error]
+  /// for the account screen to show. An *involuntary* sign-out (a token
+  /// revoked mid-session) is a separate concern, handled elsewhere.
+  Future<void> submitSignOut() async {
+    state = const AuthState.loading();
+    final result = await ref
+        .read(signOutUseCaseProvider)
+        .call(const NoParams());
+    state = result.fold(
+      (failure) => AuthState.error(
+        kind: AuthErrorKind.general,
+        message: failure.message.isEmpty ? null : failure.message,
+      ),
+      (_) {
+        ref
+            .read(appStateProvider.notifier)
+            .update(const AppState.unauthenticated());
+        return const AuthState.normal();
+      },
     );
   }
 

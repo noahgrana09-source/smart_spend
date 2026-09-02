@@ -70,8 +70,6 @@ total) con investigación de noticias en línea, vía un LLM (Gemini).
 - `error/`: jerarquía `Failure` (dartz `Either`) — `ServerFailure`,
   `AuthFailure`, `GoogleSignInFailure`, `NetworkFailure`,
   `UserPersistenceFailure`.
-- `l10n/`: internacionalización es/en. **Carpeta vacía todavía** (no hay
-  `.arb`), aunque `generate: true` ya está en `pubspec.yaml`.
 - `network/`: `DioClient` (instancia `dio` compartida) + `NetworkErrorMapper`
   (`DioException` → `Failure`).
 - `router/`: `GoRouter` (`go_router`). La navegación **no** usa
@@ -83,11 +81,19 @@ total) con investigación de noticias en línea, vía un LLM (Gemini).
 - `theme/`: `AppTheme` (light/dark) y `AppTextStyles`.
 - `usecases/`: contratos base `UseCase` / `StreamUseCase` / `NoParams`.
 - `utils/`: utilidades varias (por ahora, detección de plataforma).
+- `widgets/`: widgets adaptativos compartidos entre features
+  (`AdaptiveProgressIndicator`, `LoadingOverlay`).
 
-`lib/features/`:
+`lib/l10n/`: bundle único de internacionalización es/en (`app_en.arb` /
+`app_es.arb` + `l10n.yaml`, `generate: true`). Convención: claves con
+prefijo por feature (`auth*`, `onboarding*`, …), sin prefijo solo lo
+compartido. Generado en `lib/l10n/gen/`.
+
+`lib/features/` (distribución y decisiones técnicas por feature +
+stack: sección "Features" del `README.md` de raíz):
 - `account/`: estado de cuenta.
 - `ai_advisor/`: consultas al LLM.
-- `auth/`: autenticación.
+- `auth/`: autenticación. Capas domain/data/presentation completas.
 - `market/`: conexión con FMP para métricas de activos.
 - `onboarding/`: nacionalidad + perfil de inversor.
 - `payment/`: pago del plan Premium.
@@ -114,9 +120,9 @@ total) con investigación de noticias en línea, vía un LLM (Gemini).
 ## Esquema de colores
 
 Grises (blanco/claros en modo claro, negro/oscuros en modo oscuro) + un color
-de marca verde para botones y elementos destacados. **El hex exacto del verde
-todavía no está definido** — pendiente de decidir durante el desarrollo del
-theme.
+de marca verde para botones y elementos destacados. Verde de marca definido:
+`AppTheme.brandGreen = 0xFF0E9F6E` (seed de `ColorScheme.fromSeed` en
+`lib/core/theme/app_theme.dart`).
 
 ## Pendientes / decisiones de diseño
 
@@ -170,7 +176,7 @@ USD 9.99.
 **Dev**: `flutter_test`, `flutter_lints`, `build_runner`, `freezed`,
 `json_serializable`, `riverpod_generator`, `mocktail`, `drift_dev`.
 
-## Estado actual del proyecto (2026-08-31)
+## Estado actual del proyecto (2026-09-01)
 
 - `pubspec.yaml` con **todas** las dependencias resolviendo limpio. Sumadas
   desde el estado anterior: `go_router ^18`, `flutter_riverpod ^3.3` +
@@ -179,37 +185,43 @@ USD 9.99.
   proyectos de portfolio ya inactivos — no representa riesgo).
 - `.env.example` con `GEMINI_API_KEY`, `FMP_API_KEY`,
   `STRIPE_PUBLISHABLE_KEY`. `.env` real existe local (vacío, gitignored).
-- **`lib/core/` implementado** en todas sus carpetas salvo `l10n/` (ver
-  *Estructura de directorios*): env, error, network, router, state, theme,
-  usecases, utils y database (Drift `AppDatabase`, `UserProfileDao` + tabla,
-  y el contrato `SyncRepository`).
-- **`lib/main.dart`**: carga `Env`, inicializa Firebase y monta
-  `ProviderScope` + `MaterialApp.router` con `AppTheme` y `AppStateListener`.
-- **Feature `auth`** es el único con lógica real:
-  - `domain/`: `UserEntity`, contrato `AuthRepository`, y usecases
+- **`lib/core/` implementado** en todas sus carpetas (ver *Estructura de
+  directorios*): env, error, network, router, state, theme, usecases,
+  utils, widgets y database (Drift `AppDatabase`, `UserProfileDao` +
+  tabla, y el contrato `SyncRepository`).
+- **`lib/l10n/`**: bundle es/en montado, `MaterialApp.router` con los
+  `localizationsDelegates` + `supportedLocales`.
+- **`lib/main.dart`**: carga `Env`, inicializa Firebase, corre el
+  bootstrap de sesión (`authProvider.notifier.restoreSession()` — si hay
+  sesión de Firebase pasa el `AppState` a `authenticated` antes del primer
+  frame) y monta `UncontrolledProviderScope` + `MaterialApp.router` con
+  `AppTheme` y `AppStateListener`.
+- **Feature `auth`** — las 3 capas completas (detalle y decisiones en la
+  sección "Features → auth" del `README.md` de raíz):
+  - `domain/`: `UserEntity`, contrato `AuthRepository`, usecases
     `getCurrentUser`, `signInWithEmail`, `signInWithGoogle`, `signOut`,
     `signUpWithEmail`, `watchCurrentUser`.
-  - `data/`: `UserModel` (freezed; `fromFirebaseUser` / `fromFirestore` /
-    `fromDrift` / `toDriftCompanion`), `AuthRemoteDataSource` (Firebase Auth
-    + Firestore, con excepciones tipadas `AuthDataSourceException` /
-    `UserPersistenceException` y rollback de la cuenta recién creada si
-    falla la persistencia del perfil), `AuthLocalDataSource` (caché de
-    lectura Drift, best-effort, sin tipar errores) y `AuthRepositoryImpl`
-    (orquesta ambos: cachea local en cada auth exitosa y hace backfill
-    cache-aside desde Firestore cuando la local está vacía).
-  - `presentation/`: solo `login_screen.dart`.
-  - Tests: suite completa de `domain` + `data` (usecases, repo, model,
-    datasources).
+  - `data/`: `UserModel` (freezed), `AuthRemoteDataSource` (Firebase Auth
+    + Firestore, excepciones tipadas + rollback de cuenta), `AuthLocalDataSource`
+    (caché Drift best-effort sin tipar) y `AuthRepositoryImpl` (orquesta
+    ambos, cache-aside + backfill).
+  - `presentation/`: `providers/` (composition root `auth_providers.dart`,
+    `AuthNotifier`/`authProvider`, `commonPasswordsProvider`), `auth_utils/`
+    (`auth_validators`, `password_strength` — política NIST 800-63B, sin
+    reglas de composición; blocklist = aviso no bloqueante —, `auth_messages`),
+    `widgets/` (adaptativos Material/Cupertino), `screens/` `LoginScreen` +
+    `RegisterScreen` (esta última **no** es ruta del router; se abre con
+    `Navigator.push`). Estado local `AuthState` (normal/loading/error);
+    éxito mueve el `AppState` global, fallo queda local.
+  - Tests: `domain` + `data` + `presentation` (validators, password_strength,
+    notifier, widget tests de ambas pantallas).
 - **Features `onboarding` y `portfolio`**: solo un stub de pantalla en
   `presentation/` cada uno. `account`, `ai_advisor`, `market` y `payment`
   todavía sin crear.
-- **`assets/`**: carpeta vacía pese a estar declarada en `pubspec.yaml`.
-- **Ramas**: `staging` va 2 commits adelante de `master` (`fd4bfca`,
-  `d5deec9`). Hay cambios **sin commitear** en curso: mover
-  `UserProfileDao` + tabla de `features/auth/data/local/` a
-  `core/database/`, y quitar el código web-only de `auth`
-  (`googleSignInEvents`, client ID web, `watch_google_sign_in_events_usecase`)
-  ya que el target es solo Android/iOS.
+- **`assets/common_passwords.txt`**: blocklist de contraseñas (SecLists
+  top 10k) para el aviso de fuerza en registro, cargado por
+  `commonPasswordsProvider`.
+- **Ramas**: `staging` es la rama de trabajo; `master` es la base para PRs.
 - **Firebase (`smartspend-35d0e`) está en plan Blaze** (el upgrade desde
   Spark ya se hizo). Secret Manager y Cloud Functions con secrets
   funcionan sin bloqueo.

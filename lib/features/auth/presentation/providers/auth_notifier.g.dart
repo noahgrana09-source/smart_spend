@@ -68,7 +68,7 @@ final class AuthNotifierProvider
   }
 }
 
-String _$authNotifierHash() => r'f7282ab28dc8e30c2b59a2adc291b2a4fa9508e8';
+String _$authNotifierHash() => r'd923d4a82aca22b7dc65ad4693590753703ae5e8';
 
 /// Drives the login and register screens (they share this one notifier).
 ///

@@ -4,10 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/env/env.dart';
 import 'core/router/app_router.dart';
-import 'core/state/app_states.dart';
-import 'core/state/state_providers.dart';
 import 'core/theme/app_theme.dart';
-import 'features/auth/presentation/providers/auth_providers.dart';
+import 'features/auth/presentation/providers/auth_notifier.dart';
 import 'firebase_options.dart';
 import 'l10n/gen/app_localizations.dart';
 
@@ -18,25 +16,14 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final container = ProviderContainer();
-  _restoreSession(container);
+  // Feature bootstrap: each feature checks its own source of truth and
+  // advances the global AppState before the first frame. Auth first (a
+  // live Firebase session); onboarding will hook in here once it exists.
+  container.read(authProvider.notifier).restoreSession();
 
   runApp(
     UncontrolledProviderScope(container: container, child: const SmartSpend()),
   );
-}
-
-/// Skips the login screen when Firebase Auth still holds a session from a
-/// previous launch. Firebase Auth is the source of truth for the
-/// session; this is a synchronous read of its current user, done once
-/// before the first frame. With no session the app stays
-/// [AppState.unauthenticated] and the router shows login as usual.
-void _restoreSession(ProviderContainer container) {
-  final user = container.read(getCurrentUserUseCaseProvider).call();
-  if (user != null) {
-    container
-        .read(appStateProvider.notifier)
-        .update(const AppState.authenticated());
-  }
 }
 
 class SmartSpend extends ConsumerWidget {

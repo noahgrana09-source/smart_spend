@@ -98,131 +98,155 @@ abstract class AppLocalizations {
     Locale('es'),
   ];
 
-  /// No description provided for @loginTitle.
+  /// No description provided for @authLoginTitle.
   ///
   /// In en, this message translates to:
   /// **'Sign in'**
-  String get loginTitle;
+  String get authLoginTitle;
 
-  /// No description provided for @registerTitle.
+  /// No description provided for @authRegisterTitle.
   ///
   /// In en, this message translates to:
   /// **'Create account'**
-  String get registerTitle;
+  String get authRegisterTitle;
 
-  /// No description provided for @emailLabel.
+  /// No description provided for @authEmailLabel.
   ///
   /// In en, this message translates to:
   /// **'Email'**
-  String get emailLabel;
+  String get authEmailLabel;
 
-  /// No description provided for @passwordLabel.
+  /// No description provided for @authPasswordLabel.
   ///
   /// In en, this message translates to:
   /// **'Password'**
-  String get passwordLabel;
+  String get authPasswordLabel;
 
-  /// No description provided for @nameLabel.
+  /// No description provided for @authNameLabel.
   ///
   /// In en, this message translates to:
   /// **'Name'**
-  String get nameLabel;
+  String get authNameLabel;
 
-  /// No description provided for @confirmPasswordLabel.
+  /// No description provided for @authConfirmPasswordLabel.
   ///
   /// In en, this message translates to:
   /// **'Confirm password'**
-  String get confirmPasswordLabel;
+  String get authConfirmPasswordLabel;
 
-  /// No description provided for @signInButton.
+  /// No description provided for @authSignInButton.
   ///
   /// In en, this message translates to:
   /// **'Sign in'**
-  String get signInButton;
+  String get authSignInButton;
 
-  /// No description provided for @registerButton.
+  /// No description provided for @authRegisterButton.
   ///
   /// In en, this message translates to:
   /// **'Create account'**
-  String get registerButton;
+  String get authRegisterButton;
 
-  /// No description provided for @googleButton.
+  /// No description provided for @authGoogleButton.
   ///
   /// In en, this message translates to:
   /// **'Continue with Google'**
-  String get googleButton;
+  String get authGoogleButton;
 
-  /// No description provided for @goToRegister.
+  /// No description provided for @authGoToRegister.
   ///
   /// In en, this message translates to:
   /// **'Don\'t have an account? Sign up'**
-  String get goToRegister;
+  String get authGoToRegister;
 
-  /// No description provided for @goToLogin.
+  /// No description provided for @authGoToLogin.
   ///
   /// In en, this message translates to:
   /// **'Already have an account? Sign in'**
-  String get goToLogin;
+  String get authGoToLogin;
 
-  /// No description provided for @validationEmailEmpty.
+  /// No description provided for @authValidationEmailEmpty.
   ///
   /// In en, this message translates to:
   /// **'Enter your email'**
-  String get validationEmailEmpty;
+  String get authValidationEmailEmpty;
 
-  /// No description provided for @validationEmailInvalid.
+  /// No description provided for @authValidationEmailInvalid.
   ///
   /// In en, this message translates to:
   /// **'Enter a valid email'**
-  String get validationEmailInvalid;
+  String get authValidationEmailInvalid;
 
-  /// No description provided for @validationPasswordEmpty.
+  /// No description provided for @authValidationPasswordEmpty.
   ///
   /// In en, this message translates to:
   /// **'Enter your password'**
-  String get validationPasswordEmpty;
+  String get authValidationPasswordEmpty;
 
-  /// No description provided for @validationPasswordTooShort.
+  /// No description provided for @authValidationPasswordTooShort.
   ///
   /// In en, this message translates to:
   /// **'Password must be at least {min} characters'**
-  String validationPasswordTooShort(int min);
+  String authValidationPasswordTooShort(int min);
 
-  /// No description provided for @validationNameEmpty.
+  /// No description provided for @authValidationPasswordTooCommon.
+  ///
+  /// In en, this message translates to:
+  /// **'That password is too common, pick another one'**
+  String get authValidationPasswordTooCommon;
+
+  /// No description provided for @authValidationPasswordContainsIdentity.
+  ///
+  /// In en, this message translates to:
+  /// **'Password can\'t contain your email or obvious patterns'**
+  String get authValidationPasswordContainsIdentity;
+
+  /// No description provided for @authValidationNameEmpty.
   ///
   /// In en, this message translates to:
   /// **'Enter your name'**
-  String get validationNameEmpty;
+  String get authValidationNameEmpty;
 
-  /// No description provided for @validationConfirmPasswordEmpty.
+  /// No description provided for @authValidationConfirmPasswordEmpty.
   ///
   /// In en, this message translates to:
   /// **'Repeat your password'**
-  String get validationConfirmPasswordEmpty;
+  String get authValidationConfirmPasswordEmpty;
 
-  /// No description provided for @validationConfirmPasswordMismatch.
+  /// No description provided for @authValidationConfirmPasswordMismatch.
   ///
   /// In en, this message translates to:
   /// **'Passwords don\'t match'**
-  String get validationConfirmPasswordMismatch;
+  String get authValidationConfirmPasswordMismatch;
 
-  /// No description provided for @errorInvalidCredentials.
+  /// No description provided for @authErrorInvalidCredentials.
   ///
   /// In en, this message translates to:
   /// **'Wrong email or password'**
-  String get errorInvalidCredentials;
+  String get authErrorInvalidCredentials;
 
-  /// No description provided for @errorEmailAlreadyInUse.
+  /// No description provided for @authErrorEmailAlreadyInUse.
   ///
   /// In en, this message translates to:
   /// **'An account with this email already exists'**
-  String get errorEmailAlreadyInUse;
+  String get authErrorEmailAlreadyInUse;
 
-  /// No description provided for @errorGeneric.
+  /// No description provided for @authErrorGeneric.
   ///
   /// In en, this message translates to:
   /// **'Something went wrong. Please try again.'**
-  String get errorGeneric;
+  String get authErrorGeneric;
+
+  /// No description provided for @authPasswordStrengthWeak.
+  ///
+  /// In en, this message translates to:
+  /// **'Weak password'**
+  String get authPasswordStrengthWeak;
+
+  /// No description provided for @authPasswordStrengthStrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Strong password'**
+  String get authPasswordStrengthStrong;
 }
 
 class _AppLocalizationsDelegate

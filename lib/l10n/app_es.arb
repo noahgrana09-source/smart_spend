@@ -1,30 +1,35 @@
 {
   "@@locale": "es",
 
-  "loginTitle": "Iniciar sesión",
-  "registerTitle": "Crear cuenta",
+  "authLoginTitle": "Iniciar sesión",
+  "authRegisterTitle": "Crear cuenta",
 
-  "emailLabel": "Correo",
-  "passwordLabel": "Contraseña",
-  "nameLabel": "Nombre",
-  "confirmPasswordLabel": "Confirmar contraseña",
+  "authEmailLabel": "Correo",
+  "authPasswordLabel": "Contraseña",
+  "authNameLabel": "Nombre",
+  "authConfirmPasswordLabel": "Confirmar contraseña",
 
-  "signInButton": "Iniciar sesión",
-  "registerButton": "Crear cuenta",
-  "googleButton": "Continuar con Google",
+  "authSignInButton": "Iniciar sesión",
+  "authRegisterButton": "Crear cuenta",
+  "authGoogleButton": "Continuar con Google",
 
-  "goToRegister": "¿No tenés cuenta? Registrate",
-  "goToLogin": "¿Ya tenés cuenta? Iniciá sesión",
+  "authGoToRegister": "¿No tenés cuenta? Registrate",
+  "authGoToLogin": "¿Ya tenés cuenta? Iniciá sesión",
 
-  "validationEmailEmpty": "Ingresá tu correo",
-  "validationEmailInvalid": "Ingresá un correo válido",
-  "validationPasswordEmpty": "Ingresá tu contraseña",
-  "validationPasswordTooShort": "La contraseña debe tener al menos {min} caracteres",
-  "validationNameEmpty": "Ingresá tu nombre",
-  "validationConfirmPasswordEmpty": "Repetí tu contraseña",
-  "validationConfirmPasswordMismatch": "Las contraseñas no coinciden",
+  "authValidationEmailEmpty": "Ingresá tu correo",
+  "authValidationEmailInvalid": "Ingresá un correo válido",
+  "authValidationPasswordEmpty": "Ingresá tu contraseña",
+  "authValidationPasswordTooShort": "La contraseña debe tener al menos {min} caracteres",
+  "authValidationPasswordTooCommon": "Esa contraseña es demasiado común, elegí otra",
+  "authValidationPasswordContainsIdentity": "La contraseña no puede contener tu correo ni patrones obvios",
+  "authValidationNameEmpty": "Ingresá tu nombre",
+  "authValidationConfirmPasswordEmpty": "Repetí tu contraseña",
+  "authValidationConfirmPasswordMismatch": "Las contraseñas no coinciden",
 
-  "errorInvalidCredentials": "Correo o contraseña incorrectos",
-  "errorEmailAlreadyInUse": "Ya existe una cuenta con este correo",
-  "errorGeneric": "Algo salió mal. Probá de nuevo."
+  "authErrorInvalidCredentials": "Correo o contraseña incorrectos",
+  "authErrorEmailAlreadyInUse": "Ya existe una cuenta con este correo",
+  "authErrorGeneric": "Algo salió mal. Probá de nuevo.",
+
+  "authPasswordStrengthWeak": "Contraseña débil",
+  "authPasswordStrengthStrong": "Contraseña fuerte"
 }

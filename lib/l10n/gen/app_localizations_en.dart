@@ -9,68 +9,82 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get loginTitle => 'Sign in';
+  String get authLoginTitle => 'Sign in';
 
   @override
-  String get registerTitle => 'Create account';
+  String get authRegisterTitle => 'Create account';
 
   @override
-  String get emailLabel => 'Email';
+  String get authEmailLabel => 'Email';
 
   @override
-  String get passwordLabel => 'Password';
+  String get authPasswordLabel => 'Password';
 
   @override
-  String get nameLabel => 'Name';
+  String get authNameLabel => 'Name';
 
   @override
-  String get confirmPasswordLabel => 'Confirm password';
+  String get authConfirmPasswordLabel => 'Confirm password';
 
   @override
-  String get signInButton => 'Sign in';
+  String get authSignInButton => 'Sign in';
 
   @override
-  String get registerButton => 'Create account';
+  String get authRegisterButton => 'Create account';
 
   @override
-  String get googleButton => 'Continue with Google';
+  String get authGoogleButton => 'Continue with Google';
 
   @override
-  String get goToRegister => 'Don\'t have an account? Sign up';
+  String get authGoToRegister => 'Don\'t have an account? Sign up';
 
   @override
-  String get goToLogin => 'Already have an account? Sign in';
+  String get authGoToLogin => 'Already have an account? Sign in';
 
   @override
-  String get validationEmailEmpty => 'Enter your email';
+  String get authValidationEmailEmpty => 'Enter your email';
 
   @override
-  String get validationEmailInvalid => 'Enter a valid email';
+  String get authValidationEmailInvalid => 'Enter a valid email';
 
   @override
-  String get validationPasswordEmpty => 'Enter your password';
+  String get authValidationPasswordEmpty => 'Enter your password';
 
   @override
-  String validationPasswordTooShort(int min) {
+  String authValidationPasswordTooShort(int min) {
     return 'Password must be at least $min characters';
   }
 
   @override
-  String get validationNameEmpty => 'Enter your name';
+  String get authValidationPasswordTooCommon =>
+      'That password is too common, pick another one';
 
   @override
-  String get validationConfirmPasswordEmpty => 'Repeat your password';
+  String get authValidationPasswordContainsIdentity =>
+      'Password can\'t contain your email or obvious patterns';
 
   @override
-  String get validationConfirmPasswordMismatch => 'Passwords don\'t match';
+  String get authValidationNameEmpty => 'Enter your name';
 
   @override
-  String get errorInvalidCredentials => 'Wrong email or password';
+  String get authValidationConfirmPasswordEmpty => 'Repeat your password';
 
   @override
-  String get errorEmailAlreadyInUse =>
+  String get authValidationConfirmPasswordMismatch => 'Passwords don\'t match';
+
+  @override
+  String get authErrorInvalidCredentials => 'Wrong email or password';
+
+  @override
+  String get authErrorEmailAlreadyInUse =>
       'An account with this email already exists';
 
   @override
-  String get errorGeneric => 'Something went wrong. Please try again.';
+  String get authErrorGeneric => 'Something went wrong. Please try again.';
+
+  @override
+  String get authPasswordStrengthWeak => 'Weak password';
+
+  @override
+  String get authPasswordStrengthStrong => 'Strong password';
 }

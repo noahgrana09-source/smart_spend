@@ -1,35 +1,40 @@
 {
   "@@locale": "en",
 
-  "loginTitle": "Sign in",
-  "registerTitle": "Create account",
+  "authLoginTitle": "Sign in",
+  "authRegisterTitle": "Create account",
 
-  "emailLabel": "Email",
-  "passwordLabel": "Password",
-  "nameLabel": "Name",
-  "confirmPasswordLabel": "Confirm password",
+  "authEmailLabel": "Email",
+  "authPasswordLabel": "Password",
+  "authNameLabel": "Name",
+  "authConfirmPasswordLabel": "Confirm password",
 
-  "signInButton": "Sign in",
-  "registerButton": "Create account",
-  "googleButton": "Continue with Google",
+  "authSignInButton": "Sign in",
+  "authRegisterButton": "Create account",
+  "authGoogleButton": "Continue with Google",
 
-  "goToRegister": "Don't have an account? Sign up",
-  "goToLogin": "Already have an account? Sign in",
+  "authGoToRegister": "Don't have an account? Sign up",
+  "authGoToLogin": "Already have an account? Sign in",
 
-  "validationEmailEmpty": "Enter your email",
-  "validationEmailInvalid": "Enter a valid email",
-  "validationPasswordEmpty": "Enter your password",
-  "validationPasswordTooShort": "Password must be at least {min} characters",
-  "@validationPasswordTooShort": {
+  "authValidationEmailEmpty": "Enter your email",
+  "authValidationEmailInvalid": "Enter a valid email",
+  "authValidationPasswordEmpty": "Enter your password",
+  "authValidationPasswordTooShort": "Password must be at least {min} characters",
+  "@authValidationPasswordTooShort": {
     "placeholders": {
       "min": { "type": "int" }
     }
   },
-  "validationNameEmpty": "Enter your name",
-  "validationConfirmPasswordEmpty": "Repeat your password",
-  "validationConfirmPasswordMismatch": "Passwords don't match",
+  "authValidationPasswordTooCommon": "That password is too common, pick another one",
+  "authValidationPasswordContainsIdentity": "Password can't contain your email or obvious patterns",
+  "authValidationNameEmpty": "Enter your name",
+  "authValidationConfirmPasswordEmpty": "Repeat your password",
+  "authValidationConfirmPasswordMismatch": "Passwords don't match",
 
-  "errorInvalidCredentials": "Wrong email or password",
-  "errorEmailAlreadyInUse": "An account with this email already exists",
-  "errorGeneric": "Something went wrong. Please try again."
+  "authErrorInvalidCredentials": "Wrong email or password",
+  "authErrorEmailAlreadyInUse": "An account with this email already exists",
+  "authErrorGeneric": "Something went wrong. Please try again.",
+
+  "authPasswordStrengthWeak": "Weak password",
+  "authPasswordStrengthStrong": "Strong password"
 }
