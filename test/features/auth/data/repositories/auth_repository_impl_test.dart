@@ -497,6 +497,30 @@ void main() {
     });
   });
 
+  group('resolveCurrentUser', () {
+    test('should return UserEntity when a session resolves', () async {
+      when(
+        () => mockDataSource.resolveCurrentUser(),
+      ).thenAnswer((_) async => tUserModel);
+
+      final result = await repository.resolveCurrentUser();
+
+      expect(result, tUserEntity);
+      verify(() => mockDataSource.resolveCurrentUser()).called(1);
+    });
+
+    test('should return null when no session resolves', () async {
+      when(
+        () => mockDataSource.resolveCurrentUser(),
+      ).thenAnswer((_) async => null);
+
+      final result = await repository.resolveCurrentUser();
+
+      expect(result, isNull);
+      verify(() => mockDataSource.resolveCurrentUser()).called(1);
+    });
+  });
+
   group('local caching on successful sign-in', () {
     test('signInWithGoogle caches the user locally', () async {
       when(

@@ -37,7 +37,15 @@ abstract class AuthRepository {
   Future<Either<Failure, Unit>> signOut();
 
   /// Returns the currently authenticated user, or `null` if not signed in.
+  ///
+  /// Can spuriously return `null` right after app startup, before
+  /// Firebase Auth finishes restoring a persisted session from disk. For
+  /// a reliable read at startup, use [resolveCurrentUser] instead.
   UserEntity? getCurrentUser();
+
+  /// Resolves once Firebase Auth has determined whether a session
+  /// exists — reliable at app startup, unlike [getCurrentUser].
+  Future<UserEntity?> resolveCurrentUser();
 
   /// Watches the signed-in user's profile from the local Drift cache — a
   /// best-effort mirror of Firestore kept for offline reads elsewhere in

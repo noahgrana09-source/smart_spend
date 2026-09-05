@@ -178,6 +178,37 @@ void main() {
     expect(container.read(authProvider), const AuthState.normal());
   });
 
+  test(
+    'submitSignOut completes even when nothing watches authProvider',
+    () async {
+      // The account / onboarding screen calls this fire-and-forget via
+      // `ref.read` — it never `ref.watch`es authProvider. With an
+      // auto-disposing notifier, it would be collected during this
+      // (deliberately slow) await, and the continuation's
+      // `ref.read(appStateProvider...)` would throw on a dead ref —
+      // AppState would stay `authenticated` and the screen would freeze.
+      when(() => signOut.call(any())).thenAnswer((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        return const Right(unit);
+      });
+
+      final container = ProviderContainer(
+        overrides: [signOutUseCaseProvider.overrideWithValue(signOut)],
+      );
+      addTearDown(container.dispose);
+      container
+          .read(appStateProvider.notifier)
+          .update(const AppState.authenticated());
+
+      await container.read(authProvider.notifier).submitSignOut();
+
+      expect(
+        container.read(appStateProvider),
+        const AppState.unauthenticated(),
+      );
+    },
+  );
+
   test('sign-out failure -> global state unchanged, feature error(general)',
       () async {
     when(() => signIn.call(any())).thenAnswer((_) async => Right(user));

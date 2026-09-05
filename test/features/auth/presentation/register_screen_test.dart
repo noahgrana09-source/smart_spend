@@ -66,7 +66,7 @@ void main() {
     await tester.enterText(find.byType(TextFormField).at(3), confirm ?? password);
   }
 
-  testWidgets('renders the four fields', (tester) async {
+  testWidgets('renders the fields and actions', (tester) async {
     await pumpRegister(tester);
 
     expect(find.text('Name'), findsOneWidget);
@@ -74,6 +74,8 @@ void main() {
     expect(find.text('Password'), findsOneWidget);
     expect(find.text('Confirm password'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Create account'), findsOneWidget);
+    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.text('Already have an account?'), findsOneWidget);
   });
 
   testWidgets('short password is rejected before the use case', (tester) async {

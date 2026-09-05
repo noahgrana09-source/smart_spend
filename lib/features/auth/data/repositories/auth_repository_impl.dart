@@ -148,6 +148,12 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<UserEntity?> resolveCurrentUser() async {
+    final model = await _remoteDataSource.resolveCurrentUser();
+    return model?.toEntity();
+  }
+
+  @override
   Stream<UserEntity?> watchCurrentUser() {
     unawaited(_backfillIfEmpty());
     return _localDataSource.watchCurrentUser().map((model) => model?.toEntity());

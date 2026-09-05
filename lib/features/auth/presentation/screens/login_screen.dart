@@ -19,8 +19,9 @@ import 'register_screen.dart';
 /// Email/password + Google sign-in. Empty/format problems are caught by
 /// the form's own validators before the notifier is called; a
 /// server-side "wrong email or password" comes back on [authProvider] as
-/// [AuthErrorKind.invalidCredentials] and is re-surfaced under the
-/// password field by re-running [FormState.validate] after the await.
+/// [AuthErrorKind.invalidCredentials] and is re-surfaced under *both*
+/// the email and password fields (either could be the wrong one) by
+/// re-running [FormState.validate] after the await.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -49,8 +50,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
-    // Paint a credential error returned by the notifier, if any.
-    if (mounted) _formKey.currentState!.validate();
+    // The screen rebuilds with the new AuthState next frame; re-run the
+    // validators *after* that, so a server-side "wrong email or
+    // password" (which the field validators only return once the
+    // rebuilt state carries it) shows up. There's no as-you-type
+    // validation, so this explicit re-validate is the only thing that
+    // paints it.
+    if (!mounted) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _formKey.currentState?.validate();
+    });
   }
 
   Future<void> _submitGoogle() async {
@@ -60,13 +69,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _openRegister() async {
     final notifier = ref.read(authProvider.notifier);
+    // Login and register share one AuthNotifier. Clear this screen's
+    // banner (the state) and its fields/field-errors (the form) before
+    // Register's first build can read the same shared AuthState —
+    // otherwise a leftover error here would flash on Register's screen.
+    // The form only needs this once: it stays empty and untouched for
+    // as long as Register is covering it.
     notifier.reset();
+    _formKey.currentState?.reset();
     await Navigator.of(context).push<void>(
       PlatformUtils.isCupertino
           ? CupertinoPageRoute(builder: (_) => const RegisterScreen())
           : MaterialPageRoute(builder: (_) => const RegisterScreen()),
     );
-    if (mounted) notifier.reset();
+    if (!mounted) return;
+    // Same leak, the other direction: Register may have left its own
+    // error (e.g. a failed sign-up) on the shared AuthState — clear it
+    // so it doesn't show up on this screen's banner now that it's
+    // visible again.
+    notifier.reset();
   }
 
   @override
@@ -74,11 +95,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final l10n = AppLocalizations.of(context);
     final authState = ref.watch(authProvider);
     final isLoading = authState is AuthLoading;
-    final generalError = authState is AuthError &&
-            authState.kind == AuthErrorKind.general
+    final generalError =
+        authState is AuthError && authState.kind == AuthErrorKind.general
         ? authErrorMessage(l10n, authState)
         : null;
-    final credentialError = authState is AuthError &&
+    final credentialError =
+        authState is AuthError &&
             authState.kind == AuthErrorKind.invalidCredentials
         ? authErrorMessage(l10n, authState)
         : null;
@@ -105,16 +127,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               onChanged: clearCredentialError,
               validator: (value) {
                 final error = AuthValidators.email(value);
-                return error == null
-                    ? null
-                    : authFieldErrorMessage(l10n, error);
+                if (error != null) return authFieldErrorMessage(l10n, error);
+                return credentialError;
               },
             ),
             const SizedBox(height: 16),
             AuthTextField(
               controller: _passwordController,
               label: l10n.authPasswordLabel,
-              obscureText: true,
+              enablePassword: true,
               textInputAction: TextInputAction.done,
               autofillHints: const [AutofillHints.password],
               onChanged: clearCredentialError,
@@ -139,8 +160,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
             const SizedBox(height: 8),
             AuthModeLink(
-              label: l10n.authGoToRegister,
-              onPressed: _openRegister,
+              prompt: l10n.authGoToRegisterPrompt,
+              action: l10n.authGoToRegisterAction,
+              onTap: _openRegister,
             ),
           ],
         ),

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -64,7 +66,21 @@ abstract class AuthRemoteDataSource {
   Future<void> signOut();
 
   /// Returns the currently authenticated user, or `null` if not signed in.
+  ///
+  /// Reads [FirebaseAuth.currentUser] synchronously, which can spuriously
+  /// return `null` right after app startup — Firebase Auth restores a
+  /// persisted session from disk asynchronously, and this can race ahead
+  /// of that. Safe to use once the app is running (e.g. right after a
+  /// sign-in call in the same session); for a reliable read at startup,
+  /// use [resolveCurrentUser] instead.
   UserModel? getCurrentUser();
+
+  /// Resolves once Firebase Auth has restored (or confirmed the absence
+  /// of) a persisted session, via the first event of [FirebaseAuth
+  /// .authStateChanges]. Unlike [getCurrentUser], this cannot race ahead
+  /// of Firebase's own session restoration — it's what [AuthNotifier
+  /// .restoreSession] uses at app boot.
+  Future<UserModel?> resolveCurrentUser();
 
   /// Reads the `users/{uid}` document directly from Firestore, or `null`
   /// if it doesn't exist. Used by [AuthRepositoryImpl] to backfill the
@@ -225,13 +241,38 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<void> signOut() async {
-    await _initializeGoogleSignIn();
-    await Future.wait([_firebaseAuth.signOut(), _googleSignIn.signOut()]);
+    // Firebase Auth is what "signed out" means — this is the only part
+    // that must succeed, and it's what the repository's Either reflects.
+    await _firebaseAuth.signOut();
+
+    // Google sign-out only clears the cached Google account for the next
+    // Google sign-in. Fire it in the background: on a session that
+    // signed in with email/password, `GoogleSignIn` was never
+    // initialized, and initializing + signing out here can hang or throw
+    // on-device — which would otherwise leave `submitSignOut` stuck on
+    // its `await`, the app never advancing to unauthenticated.
+    unawaited(_signOutGoogleBestEffort());
+  }
+
+  Future<void> _signOutGoogleBestEffort() async {
+    try {
+      await _initializeGoogleSignIn();
+      await _googleSignIn.signOut();
+    } catch (_) {
+      // Ignored — secondary cleanup.
+    }
   }
 
   @override
   UserModel? getCurrentUser() {
     final User? user = _firebaseAuth.currentUser;
+    if (user == null) return null;
+    return UserModel.fromFirebaseUser(user);
+  }
+
+  @override
+  Future<UserModel?> resolveCurrentUser() async {
+    final User? user = await _firebaseAuth.authStateChanges().first;
     if (user == null) return null;
     return UserModel.fromFirebaseUser(user);
   }

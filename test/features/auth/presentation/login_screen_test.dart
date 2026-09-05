@@ -15,6 +15,14 @@ import 'package:smart_spend/l10n/gen/app_localizations.dart';
 
 import 'auth_presentation_mocks.dart';
 
+/// Like `pumpAndSettle`, but bounded: `AuthScaffold`'s Lottie header
+/// loops (`repeat: true`), so the tree never truly settles.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 10; i++) {
+    await tester.pump(const Duration(milliseconds: 120));
+  }
+}
+
 void main() {
   late MockSignInWithEmailUseCase signIn;
   late MockSignInWithGoogleUseCase google;
@@ -52,7 +60,7 @@ void main() {
         ),
       ),
     );
-    await tester.pumpAndSettle();
+    await _settle(tester);
   }
 
   Future<void> fillValid(WidgetTester tester) async {
@@ -70,7 +78,21 @@ void main() {
     expect(find.text('Password'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Sign in'), findsOneWidget);
     expect(find.text('Continue with Google'), findsOneWidget);
-    expect(find.text("Don't have an account? Sign up"), findsOneWidget);
+    expect(find.text("Don't have an account?"), findsOneWidget);
+    expect(find.text('Sign up'), findsOneWidget);
+  });
+
+  testWidgets('password field has a working visibility toggle', (tester) async {
+    await pumpLogin(tester);
+
+    expect(find.byIcon(Icons.visibility_off_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.visibility_outlined), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.visibility_off_outlined));
+    await tester.pump();
+
+    expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.visibility_off_outlined), findsNothing);
   });
 
   testWidgets('empty submit shows validation, use case not called',
@@ -78,7 +100,7 @@ void main() {
     await pumpLogin(tester);
 
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.text('Enter your email'), findsOneWidget);
     expect(find.text('Enter your password'), findsOneWidget);
@@ -91,7 +113,7 @@ void main() {
 
     await fillValid(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     verify(() => signIn.call(any())).called(1);
   });
@@ -105,12 +127,37 @@ void main() {
 
     await fillValid(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
     expect(find.text('Network down'), findsOneWidget);
   });
 
-  testWidgets('invalid credentials surfaces under the field', (tester) async {
+  testWidgets(
+    "a general error on login doesn't leak into a freshly opened register",
+    (tester) async {
+      when(() => signIn.call(any())).thenAnswer(
+        (_) async =>
+            const Left(ServerFailure(code: 'x', message: 'Network down')),
+      );
+      await pumpLogin(tester);
+      await fillValid(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await _settle(tester);
+      expect(find.text('Network down'), findsOneWidget);
+
+      // login and register share one AuthNotifier: without resetting
+      // before the push, Register's first build would read the same
+      // leftover error and show this banner too.
+      await tester.ensureVisible(find.text('Sign up'));
+      await tester.tap(find.text('Sign up'));
+      await _settle(tester);
+
+      expect(find.text('Create account'), findsWidgets);
+      expect(find.text('Network down'), findsNothing);
+    },
+  );
+
+  testWidgets('invalid credentials surfaces under both fields', (tester) async {
     when(() => signIn.call(any())).thenAnswer(
       (_) async => const Left(AuthFailure(code: 'invalid-credential')),
     );
@@ -118,10 +165,42 @@ void main() {
 
     await fillValid(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
-    await tester.pumpAndSettle();
+    await _settle(tester);
 
-    expect(find.text('Wrong email or password'), findsOneWidget);
+    // Shown under email and password: either could be the wrong one.
+    expect(find.text('Wrong email or password'), findsNWidgets(2));
   });
+
+  testWidgets(
+    'a stale credential error clears when returning from register',
+    (tester) async {
+      when(() => signIn.call(any())).thenAnswer(
+        (_) async => const Left(AuthFailure(code: 'invalid-credential')),
+      );
+      await pumpLogin(tester);
+      await fillValid(tester);
+      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await _settle(tester);
+      expect(find.text('Wrong email or password'), findsNWidgets(2));
+
+      // Login -> Register.
+      await tester.ensureVisible(find.text('Sign up'));
+      await tester.tap(find.text('Sign up'));
+      await _settle(tester);
+      expect(find.text('Create account'), findsWidgets);
+
+      // Register -> back to Login.
+      await tester.ensureVisible(find.text('Sign in'));
+      await tester.tap(find.text('Sign in'));
+      await _settle(tester);
+
+      // The TextFormField would otherwise keep showing the old error
+      // text until the user typed again — it doesn't repaint just
+      // because the parent rebuilt with a validator that now returns
+      // null.
+      expect(find.text('Wrong email or password'), findsNothing);
+    },
+  );
 
   testWidgets('shows a spinner while the sign-in is in flight', (tester) async {
     final completer = Completer<Either<Failure, UserEntity>>();
@@ -135,6 +214,6 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsWidgets);
 
     completer.complete(Right(user));
-    await tester.pumpAndSettle();
+    await _settle(tester);
   });
 }

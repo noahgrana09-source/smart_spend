@@ -28,9 +28,9 @@ class AuthErrorBanner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: scheme.onErrorContainer,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: scheme.onErrorContainer),
             ),
           ),
         ],

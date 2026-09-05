@@ -13,8 +13,10 @@
   "authRegisterButton": "Create account",
   "authGoogleButton": "Continue with Google",
 
-  "authGoToRegister": "Don't have an account? Sign up",
-  "authGoToLogin": "Already have an account? Sign in",
+  "authGoToRegisterPrompt": "Don't have an account?",
+  "authGoToRegisterAction": "Sign up",
+  "authGoToLoginPrompt": "Already have an account?",
+  "authGoToLoginAction": "Sign in",
 
   "authValidationEmailEmpty": "Enter your email",
   "authValidationEmailInvalid": "Enter a valid email",

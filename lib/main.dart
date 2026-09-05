@@ -4,8 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/env/env.dart';
 import 'core/router/app_router.dart';
+import 'core/state/app_states.dart';
+import 'core/state/state_providers.dart';
 import 'core/theme/app_theme.dart';
-import 'features/auth/presentation/providers/auth_notifier.dart';
+import 'features/auth/presentation/providers/auth_providers.dart';
 import 'firebase_options.dart';
 import 'l10n/gen/app_localizations.dart';
 
@@ -16,10 +18,20 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   final container = ProviderContainer();
-  // Feature bootstrap: each feature checks its own source of truth and
-  // advances the global AppState before the first frame. Auth first (a
-  // live Firebase session); onboarding will hook in here once it exists.
-  container.read(authProvider.notifier).restoreSession();
+  // Session bootstrap (composition root): if Firebase Auth has a
+  // persisted session, start the app already authenticated so the router
+  // opens past login. `resolveCurrentUser` waits on Firebase's own async
+  // session restoration; `appStateProvider` is keepAlive, so this value
+  // survives the gap until the first frame reads it. Onboarding will add
+  // an analogous check here once it exists. Runs entirely through
+  // keepAlive providers — no auto-disposing notifier's `ref` in play.
+  final restoredUser =
+      await container.read(resolveCurrentUserUseCaseProvider).call();
+  if (restoredUser != null) {
+    container
+        .read(appStateProvider.notifier)
+        .update(const AppState.authenticated());
+  }
 
   runApp(
     UncontrolledProviderScope(container: container, child: const SmartSpend()),

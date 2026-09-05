@@ -67,9 +67,14 @@ Email/password and Google sign-in, sign-up, sign-out.
   advances `AppState`; a failure stays local. `AppState.error` is reserved
   for session-level problems (involuntary sign-out, forced update). A
   cancelled Google prompt is a no-op.
-- **Session restore**: `AuthNotifier.restoreSession()` runs once from
-  `main()` before the first frame (a method, not `build()`, so it can
-  advance `AppState`). Future features add the same kind of bootstrap.
+- **Session restore**: `main()` reads `ResolveCurrentUserUseCase` before
+  `runApp()` — if Firebase Auth has a persisted session it sets
+  `AppState.authenticated`, so the router opens past login. Runs through
+  keepAlive providers only; `AppStateNotifier` / `PaymentStateNotifier`
+  are `keepAlive` precisely so this pre-frame write survives until the
+  first build reads it. `ResolveCurrentUserUseCase` waits on
+  `authStateChanges().first` rather than the synchronous `currentUser`,
+  which can race ahead of Firebase's async session restoration.
 - **`RegisterScreen` is not a route** — `LoginScreen` opens it with
   `Navigator.push` (adaptive page route); the state-driven router only
   knows `/login`, `/onboarding`, `/home`.

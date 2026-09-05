@@ -192,10 +192,12 @@ USD 9.99.
 - **`lib/l10n/`**: bundle es/en montado, `MaterialApp.router` con los
   `localizationsDelegates` + `supportedLocales`.
 - **`lib/main.dart`**: carga `Env`, inicializa Firebase, corre el
-  bootstrap de sesión (`authProvider.notifier.restoreSession()` — si hay
-  sesión de Firebase pasa el `AppState` a `authenticated` antes del primer
-  frame) y monta `UncontrolledProviderScope` + `MaterialApp.router` con
-  `AppTheme` y `AppStateListener`.
+  bootstrap de sesión (lee `resolveCurrentUserUseCaseProvider` — espera a
+  `authStateChanges().first` de Firebase — y si hay sesión pasa el
+  `AppState` a `authenticated` antes del primer frame) y monta
+  `UncontrolledProviderScope` + `MaterialApp.router` con `AppTheme` y
+  `AppStateListener`. `AppStateNotifier` / `PaymentStateNotifier` son
+  `keepAlive` para que ese write pre-frame no se pierda por autodispose.
 - **Feature `auth`** — las 3 capas completas (detalle y decisiones en la
   sección "Features → auth" del `README.md` de raíz):
   - `domain/`: `UserEntity`, contrato `AuthRepository`, usecases

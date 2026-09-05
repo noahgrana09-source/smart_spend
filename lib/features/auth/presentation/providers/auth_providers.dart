@@ -9,6 +9,7 @@ import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
+import '../../domain/usecases/resolve_current_user_usecase.dart';
 import '../../domain/usecases/sign_in_with_email_usecase.dart';
 import '../../domain/usecases/sign_in_with_google_usecase.dart';
 import '../../domain/usecases/sign_out_usecase.dart';
@@ -70,6 +71,10 @@ SignOutUseCase signOutUseCase(Ref ref) =>
 @Riverpod(keepAlive: true)
 GetCurrentUserUseCase getCurrentUserUseCase(Ref ref) =>
     GetCurrentUserUseCase(ref.watch(authRepositoryProvider));
+
+@Riverpod(keepAlive: true)
+ResolveCurrentUserUseCase resolveCurrentUserUseCase(Ref ref) =>
+    ResolveCurrentUserUseCase(ref.watch(authRepositoryProvider));
 
 @Riverpod(keepAlive: true)
 WatchCurrentUserUseCase watchCurrentUserUseCase(Ref ref) =>

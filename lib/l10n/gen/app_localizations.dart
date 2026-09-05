@@ -152,17 +152,29 @@ abstract class AppLocalizations {
   /// **'Continue with Google'**
   String get authGoogleButton;
 
-  /// No description provided for @authGoToRegister.
+  /// No description provided for @authGoToRegisterPrompt.
   ///
   /// In en, this message translates to:
-  /// **'Don\'t have an account? Sign up'**
-  String get authGoToRegister;
+  /// **'Don\'t have an account?'**
+  String get authGoToRegisterPrompt;
 
-  /// No description provided for @authGoToLogin.
+  /// No description provided for @authGoToRegisterAction.
   ///
   /// In en, this message translates to:
-  /// **'Already have an account? Sign in'**
-  String get authGoToLogin;
+  /// **'Sign up'**
+  String get authGoToRegisterAction;
+
+  /// No description provided for @authGoToLoginPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get authGoToLoginPrompt;
+
+  /// No description provided for @authGoToLoginAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get authGoToLoginAction;
 
   /// No description provided for @authValidationEmailEmpty.
   ///

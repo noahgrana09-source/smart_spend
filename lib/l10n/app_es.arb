@@ -13,8 +13,10 @@
   "authRegisterButton": "Crear cuenta",
   "authGoogleButton": "Continuar con Google",
 
-  "authGoToRegister": "¿No tenés cuenta? Registrate",
-  "authGoToLogin": "¿Ya tenés cuenta? Iniciá sesión",
+  "authGoToRegisterPrompt": "¿No tenés cuenta?",
+  "authGoToRegisterAction": "Registrate",
+  "authGoToLoginPrompt": "¿Ya tenés cuenta?",
+  "authGoToLoginAction": "Iniciá sesión",
 
   "authValidationEmailEmpty": "Ingresá tu correo",
   "authValidationEmailInvalid": "Ingresá un correo válido",

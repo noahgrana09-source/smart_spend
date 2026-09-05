@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -280,6 +282,40 @@ void main() {
     );
   });
 
+  group('signOut', () {
+    test(
+      'returns once Firebase sign-out completes, without waiting on the '
+      'best-effort Google sign-out',
+      () async {
+        when(() => mockFirebaseAuth.signOut()).thenAnswer((_) async {});
+        when(() => mockGoogleSignIn.initialize()).thenAnswer((_) async {});
+        final googleBlock = Completer<void>();
+        addTearDown(() {
+          if (!googleBlock.isCompleted) googleBlock.complete();
+        });
+        when(
+          () => mockGoogleSignIn.signOut(),
+        ).thenAnswer((_) => googleBlock.future);
+
+        // Would hang forever if signOut() awaited the Google part.
+        await dataSource.signOut();
+
+        verify(() => mockFirebaseAuth.signOut()).called(1);
+      },
+    );
+
+    test('a throwing Google sign-out never surfaces', () async {
+      when(() => mockFirebaseAuth.signOut()).thenAnswer((_) async {});
+      when(
+        () => mockGoogleSignIn.initialize(),
+      ).thenThrow(StateError('not configured'));
+
+      await dataSource.signOut(); // must not throw
+
+      verify(() => mockFirebaseAuth.signOut()).called(1);
+    });
+  });
+
   group('getCurrentUser', () {
     test('returns null when there is no signed-in user', () {
       when(() => mockFirebaseAuth.currentUser).thenReturn(null);
@@ -294,6 +330,36 @@ void main() {
 
       expect(result?.uid, 'uid-123');
     });
+  });
+
+  group('resolveCurrentUser', () {
+    test(
+      'returns null once authStateChanges emits with no user, even if '
+      'currentUser would say otherwise',
+      () async {
+        when(
+          () => mockFirebaseAuth.authStateChanges(),
+        ).thenAnswer((_) => Stream.value(null));
+        // Simulates the real race this method exists to avoid: a stale
+        // currentUser read while Firebase Auth is still restoring state.
+        when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+
+        expect(await dataSource.resolveCurrentUser(), isNull);
+      },
+    );
+
+    test(
+      'returns the UserModel from the first authStateChanges event',
+      () async {
+        when(
+          () => mockFirebaseAuth.authStateChanges(),
+        ).thenAnswer((_) => Stream.value(mockUser));
+
+        final result = await dataSource.resolveCurrentUser();
+
+        expect(result?.uid, 'uid-123');
+      },
+    );
   });
 
   group('fetchUserProfile', () {

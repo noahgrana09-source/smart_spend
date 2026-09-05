@@ -36,10 +36,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authGoogleButton => 'Continuar con Google';
 
   @override
-  String get authGoToRegister => '¿No tenés cuenta? Registrate';
+  String get authGoToRegisterPrompt => '¿No tenés cuenta?';
 
   @override
-  String get authGoToLogin => '¿Ya tenés cuenta? Iniciá sesión';
+  String get authGoToRegisterAction => 'Registrate';
+
+  @override
+  String get authGoToLoginPrompt => '¿Ya tenés cuenta?';
+
+  @override
+  String get authGoToLoginAction => 'Iniciá sesión';
 
   @override
   String get authValidationEmailEmpty => 'Ingresá tu correo';

@@ -13,42 +13,32 @@ import 'auth_state.dart';
 
 part 'auth_notifier.g.dart';
 
-/// Drives the login and register screens (they share this one notifier).
+/// Drives the login and register screens (they share this one notifier)
+/// and owns every session transition — sign-in / sign-up advance the
+/// global `appStateProvider` to [AppState.authenticated], `submitSignOut`
+/// takes it back to [AppState.unauthenticated].
 ///
-/// Holds only presentation state ([AuthState]: normal / loading /
-/// error). The source of truth for whether the user is authenticated is
-/// the global `appStateProvider`, which this notifier advances to
-/// [AppState.authenticated] on a successful sign-in or sign-up. A
-/// failure never touches the global state — it stays local as an
-/// [AuthState.error]; `AppState.error` is reserved for session-level
-/// problems (an unexpected sign-out, a forced update).
-@riverpod
+/// `AuthState` (normal / loading / error) is the local screen state; a
+/// failed sign-in/up stays local, `AppState.error` is reserved for
+/// session-level problems.
+///
+/// `keepAlive`: these methods touch `ref` *after* an `await`, and are
+/// called fire-and-forget from screens that only `ref.read` this
+/// notifier (the account screen's sign-out button, say — it doesn't
+/// `ref.watch` it). An auto-disposing notifier would be collected
+/// mid-await, its `ref` dead by the time the continuation runs — the
+/// `appStateProvider` update would throw, the navigation would never
+/// happen, and the screen would freeze. Screen-scoped resets are
+/// explicit ([reset]), so there's nothing to lose by keeping it alive.
+@Riverpod(keepAlive: true)
 class AuthNotifier extends _$AuthNotifier {
   @override
   AuthState build() => const AuthState.normal();
 
-  /// Back to [AuthState.normal]. Each screen calls this in `initState`
-  /// so a leftover error from the other screen doesn't show on entry.
+  /// Back to [AuthState.normal]. `LoginScreen` calls this around the
+  /// login<->register round trip so a leftover error from one screen
+  /// doesn't leak onto the other — see `_openRegister`.
   void reset() => state = const AuthState.normal();
-
-  /// Feature bootstrap, called once from `main` before the first frame
-  /// (not from [build], so it can safely advance `appStateProvider`). A
-  /// live Firebase Auth session moves the app straight to
-  /// [AppState.authenticated]; with no session nothing changes and the
-  /// router shows login. Any failure is swallowed — treat it as "no
-  /// session".
-  void restoreSession() {
-    try {
-      final user = ref.read(getCurrentUserUseCaseProvider).call();
-      if (user != null) {
-        ref
-            .read(appStateProvider.notifier)
-            .update(const AppState.authenticated());
-      }
-    } catch (_) {
-      // No session.
-    }
-  }
 
   Future<void> submitSignIn({
     required String email,

@@ -530,6 +530,54 @@ final class GetCurrentUserUseCaseProvider
 String _$getCurrentUserUseCaseHash() =>
     r'b84e9a66460d4f27c90e0c2afce402c6e10851bb';
 
+@ProviderFor(resolveCurrentUserUseCase)
+final resolveCurrentUserUseCaseProvider = ResolveCurrentUserUseCaseProvider._();
+
+final class ResolveCurrentUserUseCaseProvider
+    extends
+        $FunctionalProvider<
+          ResolveCurrentUserUseCase,
+          ResolveCurrentUserUseCase,
+          ResolveCurrentUserUseCase
+        >
+    with $Provider<ResolveCurrentUserUseCase> {
+  ResolveCurrentUserUseCaseProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'resolveCurrentUserUseCaseProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$resolveCurrentUserUseCaseHash();
+
+  @$internal
+  @override
+  $ProviderElement<ResolveCurrentUserUseCase> $createElement(
+    $ProviderPointer pointer,
+  ) => $ProviderElement(pointer);
+
+  @override
+  ResolveCurrentUserUseCase create(Ref ref) {
+    return resolveCurrentUserUseCase(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ResolveCurrentUserUseCase value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ResolveCurrentUserUseCase>(value),
+    );
+  }
+}
+
+String _$resolveCurrentUserUseCaseHash() =>
+    r'c140dca082c29bccd31f47b04482215601b87400';
+
 @ProviderFor(watchCurrentUserUseCase)
 final watchCurrentUserUseCaseProvider = WatchCurrentUserUseCaseProvider._();
 
