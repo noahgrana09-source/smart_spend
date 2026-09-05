@@ -66,5 +66,20 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<!-- Google Sign-In: OAuth client id + the reversed-client-id URL scheme
+	     it uses to return to the app. Values come from GoogleService-Info.plist
+	     (CLIENT_ID / REVERSED_CLIENT_ID). Kept here so google_sign_in works
+	     without bundling GoogleService-Info.plist into the Xcode target. -->
+	<key>GIDClientID</key>
+	<string>964821546841-d3k386pi398fl4st26arv77odfn3d3ri.apps.googleusercontent.com</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.964821546841-d3k386pi398fl4st26arv77odfn3d3ri</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

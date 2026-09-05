@@ -56,7 +56,6 @@ class DefaultFirebaseOptions {
     projectId: 'smartspend-35d0e',
     storageBucket: 'smartspend-35d0e.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyC2TAJYvj5p3eeIG1J6Nvhk5_cr6uIkpXA',
     appId: '1:964821546841:ios:84738198005f551bcefe48',

@@ -10,23 +10,44 @@ part of 'state_providers.dart';
 // ignore_for_file: type=lint, type=warning
 /// Starts unauthenticated; the `auth` feature updates this once login,
 /// onboarding, or an error is resolved.
+///
+/// `keepAlive`: this is app-lifetime global state. It must never
+/// auto-dispose — the session bootstrap in `main()` sets it during an
+/// awaited step, before the widget tree exists to hold a listener, and
+/// an auto-disposing provider would garbage-collect that value before
+/// the first frame reads it (the app would then always open on login
+/// despite a restored session).
 
 @ProviderFor(AppStateNotifier)
 final appStateProvider = AppStateNotifierProvider._();
 
 /// Starts unauthenticated; the `auth` feature updates this once login,
 /// onboarding, or an error is resolved.
+///
+/// `keepAlive`: this is app-lifetime global state. It must never
+/// auto-dispose — the session bootstrap in `main()` sets it during an
+/// awaited step, before the widget tree exists to hold a listener, and
+/// an auto-disposing provider would garbage-collect that value before
+/// the first frame reads it (the app would then always open on login
+/// despite a restored session).
 final class AppStateNotifierProvider
     extends $NotifierProvider<AppStateNotifier, AppState> {
   /// Starts unauthenticated; the `auth` feature updates this once login,
   /// onboarding, or an error is resolved.
+  ///
+  /// `keepAlive`: this is app-lifetime global state. It must never
+  /// auto-dispose — the session bootstrap in `main()` sets it during an
+  /// awaited step, before the widget tree exists to hold a listener, and
+  /// an auto-disposing provider would garbage-collect that value before
+  /// the first frame reads it (the app would then always open on login
+  /// despite a restored session).
   AppStateNotifierProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'appStateProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -47,10 +68,17 @@ final class AppStateNotifierProvider
   }
 }
 
-String _$appStateNotifierHash() => r'731b404b2b8536e685ec5425d3cfe300582f9434';
+String _$appStateNotifierHash() => r'3171865ceb18c5172191109a188e209165917ad0';
 
 /// Starts unauthenticated; the `auth` feature updates this once login,
 /// onboarding, or an error is resolved.
+///
+/// `keepAlive`: this is app-lifetime global state. It must never
+/// auto-dispose — the session bootstrap in `main()` sets it during an
+/// awaited step, before the widget tree exists to hold a listener, and
+/// an auto-disposing provider would garbage-collect that value before
+/// the first frame reads it (the app would then always open on login
+/// despite a restored session).
 
 abstract class _$AppStateNotifier extends $Notifier<AppState> {
   AppState build();
@@ -72,23 +100,29 @@ abstract class _$AppStateNotifier extends $Notifier<AppState> {
 
 /// Starts standard; the `payment` feature updates this once Stripe's
 /// webhook confirms the purchase (see `functions/src/index.ts`).
+/// `keepAlive` for the same reason as [AppStateNotifier] — app-lifetime
+/// global state.
 
 @ProviderFor(PaymentStateNotifier)
 final paymentStateProvider = PaymentStateNotifierProvider._();
 
 /// Starts standard; the `payment` feature updates this once Stripe's
 /// webhook confirms the purchase (see `functions/src/index.ts`).
+/// `keepAlive` for the same reason as [AppStateNotifier] — app-lifetime
+/// global state.
 final class PaymentStateNotifierProvider
     extends $NotifierProvider<PaymentStateNotifier, PaymentState> {
   /// Starts standard; the `payment` feature updates this once Stripe's
   /// webhook confirms the purchase (see `functions/src/index.ts`).
+  /// `keepAlive` for the same reason as [AppStateNotifier] — app-lifetime
+  /// global state.
   PaymentStateNotifierProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'paymentStateProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -110,10 +144,12 @@ final class PaymentStateNotifierProvider
 }
 
 String _$paymentStateNotifierHash() =>
-    r'69930f07188fe0a1e760a23bf5fc6b3e04b3bb71';
+    r'ec87ff663f1ff5acce724642afbb4bbed5c475f1';
 
 /// Starts standard; the `payment` feature updates this once Stripe's
 /// webhook confirms the purchase (see `functions/src/index.ts`).
+/// `keepAlive` for the same reason as [AppStateNotifier] — app-lifetime
+/// global state.
 
 abstract class _$PaymentStateNotifier extends $Notifier<PaymentState> {
   PaymentState build();

@@ -1,0 +1,42 @@
+{
+  "@@locale": "en",
+
+  "authLoginTitle": "Sign in",
+  "authRegisterTitle": "Create account",
+
+  "authEmailLabel": "Email",
+  "authPasswordLabel": "Password",
+  "authNameLabel": "Name",
+  "authConfirmPasswordLabel": "Confirm password",
+
+  "authSignInButton": "Sign in",
+  "authRegisterButton": "Create account",
+  "authGoogleButton": "Continue with Google",
+
+  "authGoToRegisterPrompt": "Don't have an account?",
+  "authGoToRegisterAction": "Sign up",
+  "authGoToLoginPrompt": "Already have an account?",
+  "authGoToLoginAction": "Sign in",
+
+  "authValidationEmailEmpty": "Enter your email",
+  "authValidationEmailInvalid": "Enter a valid email",
+  "authValidationPasswordEmpty": "Enter your password",
+  "authValidationPasswordTooShort": "Password must be at least {min} characters",
+  "@authValidationPasswordTooShort": {
+    "placeholders": {
+      "min": { "type": "int" }
+    }
+  },
+  "authValidationPasswordTooCommon": "That password is too common, pick another one",
+  "authValidationPasswordContainsIdentity": "Password can't contain your email or obvious patterns",
+  "authValidationNameEmpty": "Enter your name",
+  "authValidationConfirmPasswordEmpty": "Repeat your password",
+  "authValidationConfirmPasswordMismatch": "Passwords don't match",
+
+  "authErrorInvalidCredentials": "Wrong email or password",
+  "authErrorEmailAlreadyInUse": "An account with this email already exists",
+  "authErrorGeneric": "Something went wrong. Please try again.",
+
+  "authPasswordStrengthWeak": "Weak password",
+  "authPasswordStrengthStrong": "Strong password"
+}

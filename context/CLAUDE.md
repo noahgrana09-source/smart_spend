@@ -63,19 +63,37 @@ total) con investigación de noticias en línea, vía un LLM (Gemini).
 ## Estructura de directorios
 
 `lib/core/`:
-- `database/`: lógica de Drift y Firestore.
-- `env/`: variables de entorno (`flutter_dotenv`).
-- `error/`: `Failure`s propias para manejar errores con `dartz`.
-- `l10n/`: internacionalización es/en.
-- `network/`: conexiones REST con `dio`.
-- `router/`: redirección según estado de autenticación.
-- `theme/`: `ThemeData`, esquema de colores.
-- `utils/`: utilidades varias (por ahora, de plataforma).
+- `database/`: conexión única Drift/SQLite (`AppDatabase`), con `tables/` y
+  `daos/` adentro; `sync_repository.dart` define el contrato offline-first
+  (Drift SSOT + push best-effort a Firestore) que cada feature implementa.
+- `env/`: acceso tipado a variables de entorno (`Env`, `flutter_dotenv`).
+- `error/`: jerarquía `Failure` (dartz `Either`) — `ServerFailure`,
+  `AuthFailure`, `GoogleSignInFailure`, `NetworkFailure`,
+  `UserPersistenceFailure`.
+- `network/`: `DioClient` (instancia `dio` compartida) + `NetworkErrorMapper`
+  (`DioException` → `Failure`).
+- `router/`: `GoRouter` (`go_router`). La navegación **no** usa
+  `GoRouter.redirect`: `AppStateListener` (montado como `builder` de
+  `MaterialApp.router`) observa `appStateProvider` y llama `context.go` en
+  cada cambio de estado.
+- `state/`: estados globales `freezed` (`AppState`, `PaymentState`) y sus
+  notifiers Riverpod (`AppStateNotifier`, `PaymentStateNotifier`).
+- `theme/`: `AppTheme` (light/dark) y `AppTextStyles`.
+- `usecases/`: contratos base `UseCase` / `StreamUseCase` / `NoParams`.
+- `utils/`: utilidades varias (por ahora, detección de plataforma).
+- `widgets/`: widgets adaptativos compartidos entre features
+  (`AdaptiveProgressIndicator`, `LoadingOverlay`).
 
-`lib/features/`:
+`lib/l10n/`: bundle único de internacionalización es/en (`app_en.arb` /
+`app_es.arb` + `l10n.yaml`, `generate: true`). Convención: claves con
+prefijo por feature (`auth*`, `onboarding*`, …), sin prefijo solo lo
+compartido. Generado en `lib/l10n/gen/`.
+
+`lib/features/` (distribución y decisiones técnicas por feature +
+stack: sección "Features" del `README.md` de raíz):
 - `account/`: estado de cuenta.
 - `ai_advisor/`: consultas al LLM.
-- `auth/`: autenticación.
+- `auth/`: autenticación. Capas domain/data/presentation completas.
 - `market/`: conexión con FMP para métricas de activos.
 - `onboarding/`: nacionalidad + perfil de inversor.
 - `payment/`: pago del plan Premium.
@@ -102,9 +120,32 @@ total) con investigación de noticias en línea, vía un LLM (Gemini).
 ## Esquema de colores
 
 Grises (blanco/claros en modo claro, negro/oscuros en modo oscuro) + un color
-de marca verde para botones y elementos destacados. **El hex exacto del verde
-todavía no está definido** — pendiente de decidir durante el desarrollo del
-theme.
+de marca verde para botones y elementos destacados. Verde de marca definido:
+`AppTheme.brandGreen = 0xFF0E9F6E` (seed de `ColorScheme.fromSeed` en
+`lib/core/theme/app_theme.dart`).
+
+## Pendientes / decisiones de diseño
+
+- **Reconciliación local↔remoto (offline-first).** En `auth` la DB local es
+  best-effort: si la escritura en Drift falla, el login no falla igual
+  (Firebase Auth/Firestore son la fuente de verdad) y **no se tipa el
+  error** en el datasource local. Para el resto de los features, cuando la
+  persistencia local falle la estrategia es **reconciliar por presencia**,
+  no por tipo de error: al leer, si la fila no existe en Drift se rellena
+  desde Firestore. Matices a cubrir en la implementación:
+  - "Existe" no implica "está al día": la tabla lleva un marcador de
+    frescura (`updatedAt` o una columna `dirty`/`pending`) para detectar
+    filas desactualizadas por un update local fallido.
+  - Igual hace falta **un** `try/catch` genérico (sin tipar) como fallback
+    "lectura local falló → leo de remota", para el caso de DB corrupta.
+  - La reconciliación se dispara en momentos definidos (arranque de app,
+    login, pull-to-refresh, o caché local vacía), **nunca en cada lectura**
+    (un read a Firestore por consulta choca con el enfoque offline-first y
+    suma costo).
+  - Vive una sola vez en `sync_repository.dart` / un helper compartido, no
+    duplicada por feature.
+  - Implementar cuando llegue el primer feature que lo necesite
+    (`portfolio` / `account`).
 
 ## Dependencias por paso
 
@@ -135,19 +176,54 @@ USD 9.99.
 **Dev**: `flutter_test`, `flutter_lints`, `build_runner`, `freezed`,
 `json_serializable`, `riverpod_generator`, `mocktail`, `drift_dev`.
 
-## Estado actual del proyecto (2026-08-22)
+## Estado actual del proyecto (2026-09-01)
 
-- `pubspec.yaml` tiene **todas** las dependencias de arriba agregadas y
-  resolviendo limpio (`flutter pub get` sin conflictos).
-- Flutter/Dart actualizados: Flutter 3.47.1 / Dart 3.13.1 (SDK global de la
-  máquina, compartido con otros 3 proyectos de portfolio del usuario que ya
-  no se tocan — no representa riesgo).
-- `.env.example` creado con `GEMINI_API_KEY`, `FMP_API_KEY`,
+- `pubspec.yaml` con **todas** las dependencias resolviendo limpio. Sumadas
+  desde el estado anterior: `go_router ^18`, `flutter_riverpod ^3.3` +
+  `riverpod_annotation ^4` + `riverpod_generator ^4`. Constraint del SDK
+  Dart: `^3.11.1` (SDK global de la máquina, compartido con otros 3
+  proyectos de portfolio ya inactivos — no representa riesgo).
+- `.env.example` con `GEMINI_API_KEY`, `FMP_API_KEY`,
   `STRIPE_PUBLISHABLE_KEY`. `.env` real existe local (vacío, gitignored).
-- `lib/core/*` y `lib/features/*` siguen siendo carpetas vacías (todavía no
-  se escribió código de `core/`). `lib/main.dart` solo inicializa Firebase
-  con un Hello World.
-- No hay `assets/` cargados todavía pese a estar declarado en `pubspec.yaml`.
+- **`lib/core/` implementado** en todas sus carpetas (ver *Estructura de
+  directorios*): env, error, network, router, state, theme, usecases,
+  utils, widgets y database (Drift `AppDatabase`, `UserProfileDao` +
+  tabla, y el contrato `SyncRepository`).
+- **`lib/l10n/`**: bundle es/en montado, `MaterialApp.router` con los
+  `localizationsDelegates` + `supportedLocales`.
+- **`lib/main.dart`**: carga `Env`, inicializa Firebase, corre el
+  bootstrap de sesión (lee `resolveCurrentUserUseCaseProvider` — espera a
+  `authStateChanges().first` de Firebase — y si hay sesión pasa el
+  `AppState` a `authenticated` antes del primer frame) y monta
+  `UncontrolledProviderScope` + `MaterialApp.router` con `AppTheme` y
+  `AppStateListener`. `AppStateNotifier` / `PaymentStateNotifier` son
+  `keepAlive` para que ese write pre-frame no se pierda por autodispose.
+- **Feature `auth`** — las 3 capas completas (detalle y decisiones en la
+  sección "Features → auth" del `README.md` de raíz):
+  - `domain/`: `UserEntity`, contrato `AuthRepository`, usecases
+    `getCurrentUser`, `signInWithEmail`, `signInWithGoogle`, `signOut`,
+    `signUpWithEmail`, `watchCurrentUser`.
+  - `data/`: `UserModel` (freezed), `AuthRemoteDataSource` (Firebase Auth
+    + Firestore, excepciones tipadas + rollback de cuenta), `AuthLocalDataSource`
+    (caché Drift best-effort sin tipar) y `AuthRepositoryImpl` (orquesta
+    ambos, cache-aside + backfill).
+  - `presentation/`: `providers/` (composition root `auth_providers.dart`,
+    `AuthNotifier`/`authProvider`, `commonPasswordsProvider`), `auth_utils/`
+    (`auth_validators`, `password_strength` — política NIST 800-63B, sin
+    reglas de composición; blocklist = aviso no bloqueante —, `auth_messages`),
+    `widgets/` (adaptativos Material/Cupertino), `screens/` `LoginScreen` +
+    `RegisterScreen` (esta última **no** es ruta del router; se abre con
+    `Navigator.push`). Estado local `AuthState` (normal/loading/error);
+    éxito mueve el `AppState` global, fallo queda local.
+  - Tests: `domain` + `data` + `presentation` (validators, password_strength,
+    notifier, widget tests de ambas pantallas).
+- **Features `onboarding` y `portfolio`**: solo un stub de pantalla en
+  `presentation/` cada uno. `account`, `ai_advisor`, `market` y `payment`
+  todavía sin crear.
+- **`assets/common_passwords.txt`**: blocklist de contraseñas (SecLists
+  top 10k) para el aviso de fuerza en registro, cargado por
+  `commonPasswordsProvider`.
+- **Ramas**: `staging` es la rama de trabajo; `master` es la base para PRs.
 - **Firebase (`smartspend-35d0e`) está en plan Blaze** (el upgrade desde
   Spark ya se hizo). Secret Manager y Cloud Functions con secrets
   funcionan sin bloqueo.

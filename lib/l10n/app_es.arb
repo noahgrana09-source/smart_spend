@@ -1,0 +1,37 @@
+{
+  "@@locale": "es",
+
+  "authLoginTitle": "Iniciar sesión",
+  "authRegisterTitle": "Crear cuenta",
+
+  "authEmailLabel": "Correo",
+  "authPasswordLabel": "Contraseña",
+  "authNameLabel": "Nombre",
+  "authConfirmPasswordLabel": "Confirmar contraseña",
+
+  "authSignInButton": "Iniciar sesión",
+  "authRegisterButton": "Crear cuenta",
+  "authGoogleButton": "Continuar con Google",
+
+  "authGoToRegisterPrompt": "¿No tenés cuenta?",
+  "authGoToRegisterAction": "Registrate",
+  "authGoToLoginPrompt": "¿Ya tenés cuenta?",
+  "authGoToLoginAction": "Iniciá sesión",
+
+  "authValidationEmailEmpty": "Ingresá tu correo",
+  "authValidationEmailInvalid": "Ingresá un correo válido",
+  "authValidationPasswordEmpty": "Ingresá tu contraseña",
+  "authValidationPasswordTooShort": "La contraseña debe tener al menos {min} caracteres",
+  "authValidationPasswordTooCommon": "Esa contraseña es demasiado común, elegí otra",
+  "authValidationPasswordContainsIdentity": "La contraseña no puede contener tu correo ni patrones obvios",
+  "authValidationNameEmpty": "Ingresá tu nombre",
+  "authValidationConfirmPasswordEmpty": "Repetí tu contraseña",
+  "authValidationConfirmPasswordMismatch": "Las contraseñas no coinciden",
+
+  "authErrorInvalidCredentials": "Correo o contraseña incorrectos",
+  "authErrorEmailAlreadyInUse": "Ya existe una cuenta con este correo",
+  "authErrorGeneric": "Algo salió mal. Probá de nuevo.",
+
+  "authPasswordStrengthWeak": "Contraseña débil",
+  "authPasswordStrengthStrong": "Contraseña fuerte"
+}
