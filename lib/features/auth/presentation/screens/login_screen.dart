@@ -11,8 +11,8 @@ import '../providers/auth_state.dart';
 import '../widgets/auth_error_banner.dart';
 import '../widgets/auth_mode_link.dart';
 import '../widgets/auth_primary_button.dart';
-import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_text_field.dart';
+import '../widgets/form_scaffold.dart';
 import '../widgets/google_sign_in_button.dart';
 import 'register_screen.dart';
 
@@ -109,7 +109,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       if (credentialError != null) ref.read(authProvider.notifier).reset();
     }
 
-    return AuthScaffold(
+    return FormScaffold(
       title: l10n.authLoginTitle,
       child: Form(
         key: _formKey,

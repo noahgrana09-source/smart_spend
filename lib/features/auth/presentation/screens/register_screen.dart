@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/platform_utils.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../auth_utils/auth_messages.dart';
 import '../auth_utils/auth_validators.dart';
@@ -11,10 +13,11 @@ import '../providers/common_passwords_provider.dart';
 import '../widgets/auth_error_banner.dart';
 import '../widgets/auth_mode_link.dart';
 import '../widgets/auth_primary_button.dart';
-import '../widgets/auth_scaffold.dart';
 import '../widgets/auth_text_field.dart';
+import '../widgets/form_scaffold.dart';
 import '../widgets/google_sign_in_button.dart';
 import '../widgets/password_strength_banner.dart';
+import 'email_verification_screen.dart';
 
 /// Create-account screen. `name` and `confirmPassword` are client-side
 /// only (Firebase needs email + password + displayName). The sign-up
@@ -38,8 +41,32 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
 
+  String _lastPasswordValue = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_mirrorGeneratedPassword);
+  }
+
+  /// The OS's "suggest strong password" (via the `newPassword` autofill
+  /// hint) only fills this field, never the separate confirm field — so
+  /// mirror it there too. Detected as a multi-character jump (a suggested
+  /// password, or a paste) rather than a single keystroke, and only while
+  /// confirm is still empty, so it never overwrites something the user
+  /// already typed there themselves.
+  void _mirrorGeneratedPassword() {
+    final value = _passwordController.text;
+    final isBulkChange = (value.length - _lastPasswordValue.length).abs() > 1;
+    _lastPasswordValue = value;
+    if (isBulkChange && _confirmController.text.isEmpty) {
+      _confirmController.text = value;
+    }
+  }
+
   @override
   void dispose() {
+    _passwordController.removeListener(_mirrorGeneratedPassword);
     _nameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -74,9 +101,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     await ref.read(authProvider.notifier).submitGoogle();
   }
 
+  Future<void> _openEmailVerification(String email) {
+    return Navigator.of(context).push<void>(
+      PlatformUtils.isCupertino
+          ? CupertinoPageRoute(
+              builder: (_) => EmailVerificationScreen(email: email),
+            )
+          : MaterialPageRoute(
+              builder: (_) => EmailVerificationScreen(email: email),
+            ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    ref.listen<AuthState>(authProvider, (previous, next) {
+      if (next is AuthVerifying) _openEmailVerification(next.email);
+    });
     final authState = ref.watch(authProvider);
     final commonPasswords =
         ref.watch(commonPasswordsProvider).value ?? const <String>{};
@@ -90,7 +132,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ? authErrorMessage(l10n, authState)
         : null;
 
-    return AuthScaffold(
+    return FormScaffold(
       title: l10n.authRegisterTitle,
       // "Unlocked" reads as a login motion, and this form is already
       // tall — keep it to the login screen.

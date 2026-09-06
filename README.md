@@ -1,13 +1,10 @@
 # SmartSpend
 
-Flutter app (Android / iOS) for personal finance and investments: it shows
+**Product spec:** Flutter app (Android / iOS) for personal finance and investments: it shows
 the user's portfolio and performance and gives buy / don't-buy style
 recommendations through an LLM (Gemini), combining the user's risk profile,
 a portfolio summary, and relevant news (RAG-lite). Premium is a one-time
 USD 9.99 unlock (Stripe) after 3 free LLM queries.
-
-Full product spec: `context/SmartSpend.txt`. Working context and current
-state: `context/CLAUDE.md`.
 
 ## Architecture
 
@@ -27,6 +24,13 @@ state: `context/CLAUDE.md`.
   (`lib/core/database/sync_repository.dart` is the contract).
 - **Adaptive UI** — presentation widgets detect the OS and render Material
   or Cupertino; where Cupertino has no equivalent, Material imitates it.
+- **Adaptive theme** — `AppTheme` (`lib/core/theme/app_theme.dart`) builds a
+  `light` and a `dark` `ThemeData` from the same
+  `ColorScheme.fromSeed(seedColor: brandGreen)`, one per `Brightness`,
+  sharing `AppTextStyles.textTheme`. `MaterialApp.router` (`lib/main.dart`)
+  wires both (`theme` / `darkTheme`) with `themeMode: ThemeMode.system`, so
+  the app follows the OS-level light/dark setting automatically — there is
+  no in-app toggle or persisted override yet.
 - **l10n** — single bundle in `lib/l10n/` (es/en), keys prefixed per
   feature (`auth*`, `onboarding*`, …).
 

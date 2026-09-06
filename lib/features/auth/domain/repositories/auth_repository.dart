@@ -36,6 +36,19 @@ abstract class AuthRepository {
   /// Returns [Unit] on success or a [Failure] on error.
   Future<Either<Failure, Unit>> signOut();
 
+  /// Re-sends the verification email to the currently signed-in user.
+  ///
+  /// Returns [Unit] on success or a [Failure] on error.
+  Future<Either<Failure, Unit>> resendEmailVerification();
+
+  /// Reloads the currently signed-in user from Firebase Auth and returns
+  /// whether their email is verified now.
+  ///
+  /// Returns `false` (not a [Failure]) when the reload succeeds but the
+  /// email still isn't verified — that's an expected outcome, not an
+  /// error.
+  Future<Either<Failure, bool>> checkEmailVerified();
+
   /// Returns the currently authenticated user, or `null` if not signed in.
   ///
   /// Can spuriously return `null` right after app startup, before

@@ -73,6 +73,7 @@ void main() {
       when(() => mockUser.updateDisplayName(any())).thenAnswer((_) async {});
       when(() => mockUser.reload()).thenAnswer((_) async {});
       when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+      when(() => mockUser.sendEmailVerification()).thenAnswer((_) async {});
     }
 
     test(
@@ -92,6 +93,28 @@ void main() {
         expect(result.uid, 'uid-123');
         verify(() => mockDocRef.set(any(), any())).called(1);
         verifyNever(() => mockUser.delete());
+        verify(() => mockUser.sendEmailVerification()).called(1);
+      },
+    );
+
+    test(
+      'still returns the UserModel when sending the verification email fails',
+      () async {
+        stubSuccessfulAccountCreation();
+        when(() => mockDocRef.get()).thenAnswer((_) async => mockSnapshot);
+        when(() => mockSnapshot.exists).thenReturn(false);
+        when(() => mockDocRef.set(any(), any())).thenAnswer((_) async {});
+        when(
+          () => mockUser.sendEmailVerification(),
+        ).thenThrow(FirebaseAuthException(code: 'too-many-requests'));
+
+        final result = await dataSource.signUpWithEmailAndPassword(
+          email: 'test@example.com',
+          password: 'Password1!',
+          name: 'Test User',
+        );
+
+        expect(result.uid, 'uid-123');
       },
     );
 
@@ -314,6 +337,78 @@ void main() {
 
       verify(() => mockFirebaseAuth.signOut()).called(1);
     });
+  });
+
+  group('sendEmailVerification', () {
+    test('calls sendEmailVerification on the current user', () async {
+      when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+      when(() => mockUser.sendEmailVerification()).thenAnswer((_) async {});
+
+      await dataSource.sendEmailVerification();
+
+      verify(() => mockUser.sendEmailVerification()).called(1);
+    });
+
+    test(
+      'throws AuthDataSourceException with a no-current-user code when there is no signed-in user',
+      () async {
+        when(() => mockFirebaseAuth.currentUser).thenReturn(null);
+
+        await expectLater(
+          () => dataSource.sendEmailVerification(),
+          throwsA(
+            isA<AuthDataSourceException>().having(
+              (e) => e.code,
+              'code',
+              'no-current-user',
+            ),
+          ),
+        );
+      },
+    );
+  });
+
+  group('reloadAndCheckEmailVerified', () {
+    test('reloads the user and returns the fresh emailVerified value',
+        () async {
+      when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+      when(() => mockUser.reload()).thenAnswer((_) async {});
+      when(() => mockUser.emailVerified).thenReturn(true);
+
+      final result = await dataSource.reloadAndCheckEmailVerified();
+
+      expect(result, true);
+      verify(() => mockUser.reload()).called(1);
+    });
+
+    test('returns false when the reloaded user is still not verified',
+        () async {
+      when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+      when(() => mockUser.reload()).thenAnswer((_) async {});
+      when(() => mockUser.emailVerified).thenReturn(false);
+
+      final result = await dataSource.reloadAndCheckEmailVerified();
+
+      expect(result, false);
+    });
+
+    test(
+      'throws AuthDataSourceException with a no-current-user code when there is no signed-in user',
+      () async {
+        when(() => mockFirebaseAuth.currentUser).thenReturn(null);
+
+        await expectLater(
+          () => dataSource.reloadAndCheckEmailVerified(),
+          throwsA(
+            isA<AuthDataSourceException>().having(
+              (e) => e.code,
+              'code',
+              'no-current-user',
+            ),
+          ),
+        );
+      },
+    );
   });
 
   group('getCurrentUser', () {

@@ -30,13 +30,15 @@ String authFieldErrorMessage(AppLocalizations l10n, AuthFieldError error) {
 
 /// Localized text for a failed submit. [AuthErrorKind.invalidCredentials]
 /// and [AuthErrorKind.emailAlreadyInUse] render under a text field;
-/// [AuthErrorKind.general] is the error banner ([AuthError.message] when
-/// the failure carried one, otherwise a generic line).
+/// [AuthErrorKind.general] and [AuthErrorKind.emailNotVerified] go to the
+/// error banner ([AuthError.message] when the failure carried one,
+/// otherwise a generic line).
 String authErrorMessage(AppLocalizations l10n, AuthError error) {
   return switch (error.kind) {
     AuthErrorKind.invalidCredentials => l10n.authErrorInvalidCredentials,
     AuthErrorKind.emailAlreadyInUse => l10n.authErrorEmailAlreadyInUse,
     AuthErrorKind.general => error.message ?? l10n.authErrorGeneric,
+    AuthErrorKind.emailNotVerified => l10n.authErrorEmailNotVerified,
   };
 }
 

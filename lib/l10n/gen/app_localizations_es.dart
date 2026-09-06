@@ -15,6 +15,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get authRegisterTitle => 'Crear cuenta';
 
   @override
+  String get authEmailVerificationTitle => 'Verificá tu correo';
+
+  @override
   String get authEmailLabel => 'Correo';
 
   @override
@@ -34,6 +37,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get authGoogleButton => 'Continuar con Google';
+
+  @override
+  String authEmailVerificationDescription(String email) {
+    return 'Te enviamos un link de verificación a $email. Revisá tu bandeja de entrada y, si no lo encontrás, buscá en la carpeta de spam.';
+  }
+
+  @override
+  String get authEmailVerifiedButton => 'Correo verificado';
+
+  @override
+  String get authResendEmailButton => 'Reenviar correo';
+
+  @override
+  String get authBackToRegisterButton => 'Volver al registro';
 
   @override
   String get authGoToRegisterPrompt => '¿No tenés cuenta?';
@@ -88,6 +105,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get authErrorGeneric => 'Algo salió mal. Probá de nuevo.';
+
+  @override
+  String get authErrorEmailNotVerified =>
+      'Tu correo todavía no está verificado';
 
   @override
   String get authPasswordStrengthWeak => 'Contraseña débil';

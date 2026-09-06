@@ -8,12 +8,12 @@ import '../../../../core/widgets/loading_overlay.dart';
 import '../providers/auth_notifier.dart';
 import '../providers/auth_state.dart';
 
-/// Shared chrome for the login and register screens: a platform-native
+/// Shared chrome for the login and register forms: a platform-native
 /// page scaffold with a scrollable, keyboard-safe, width-capped body,
 /// a header Lottie animation, and a [LoadingOverlay] wired to the shared
 /// [authProvider] so any in-flight submit blocks the whole screen.
-class AuthScaffold extends ConsumerWidget {
-  const AuthScaffold({
+class FormScaffold extends ConsumerWidget {
+  const FormScaffold({
     super.key,
     required this.title,
     required this.child,

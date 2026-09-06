@@ -8,6 +8,8 @@ import 'package:smart_spend/core/state/app_states.dart';
 import 'package:smart_spend/core/state/state_providers.dart';
 import 'package:smart_spend/core/usecases/usecase.dart';
 import 'package:smart_spend/features/auth/domain/entities/user_entity.dart';
+import 'package:smart_spend/features/auth/domain/usecases/check_email_verified_usecase.dart';
+import 'package:smart_spend/features/auth/domain/usecases/resend_email_verification_usecase.dart';
 import 'package:smart_spend/features/auth/domain/usecases/sign_in_with_email_usecase.dart';
 import 'package:smart_spend/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
 import 'package:smart_spend/features/auth/domain/usecases/sign_out_usecase.dart';
@@ -25,11 +27,19 @@ class _MockSignInWithGoogle extends Mock implements SignInWithGoogleUseCase {}
 
 class _MockSignOut extends Mock implements SignOutUseCase {}
 
+class _MockResendEmailVerification extends Mock
+    implements ResendEmailVerificationUseCase {}
+
+class _MockCheckEmailVerified extends Mock
+    implements CheckEmailVerifiedUseCase {}
+
 void main() {
   late _MockSignInWithEmail signIn;
   late _MockSignUpWithEmail signUp;
   late _MockSignInWithGoogle google;
   late _MockSignOut signOut;
+  late _MockResendEmailVerification resendVerification;
+  late _MockCheckEmailVerified checkVerified;
 
   final user = UserEntity(
     uid: 'u1',
@@ -52,6 +62,8 @@ void main() {
     signUp = _MockSignUpWithEmail();
     google = _MockSignInWithGoogle();
     signOut = _MockSignOut();
+    resendVerification = _MockResendEmailVerification();
+    checkVerified = _MockCheckEmailVerified();
   });
 
   ProviderContainer makeContainer() {
@@ -61,6 +73,10 @@ void main() {
         signUpWithEmailUseCaseProvider.overrideWithValue(signUp),
         signInWithGoogleUseCaseProvider.overrideWithValue(google),
         signOutUseCaseProvider.overrideWithValue(signOut),
+        resendEmailVerificationUseCaseProvider.overrideWithValue(
+          resendVerification,
+        ),
+        checkEmailVerifiedUseCaseProvider.overrideWithValue(checkVerified),
       ],
     );
     addTearDown(container.dispose);
@@ -230,6 +246,118 @@ void main() {
         message: 'no network',
       ),
     );
+  });
+
+  test(
+    'successful sign-up -> feature verifying(email), global stays unauthenticated',
+    () async {
+      when(() => signUp.call(any())).thenAnswer((_) async => Right(user));
+      final container = makeContainer();
+
+      await container.read(authProvider.notifier).submitSignUp(
+            name: 'A',
+            email: 'a@b.com',
+            password: 'pw',
+          );
+
+      expect(
+        container.read(authProvider),
+        const AuthState.verifying(email: 'a@b.com'),
+      );
+      expect(container.read(appStateProvider), const AppState.unauthenticated());
+    },
+  );
+
+  group('checkEmailVerifiedNow', () {
+    test('verified -> global authenticated, feature normal', () async {
+      when(() => signUp.call(any())).thenAnswer((_) async => Right(user));
+      when(
+        () => checkVerified.call(any()),
+      ).thenAnswer((_) async => const Right(true));
+      final container = makeContainer();
+      await container.read(authProvider.notifier).submitSignUp(
+            name: 'A',
+            email: 'a@b.com',
+            password: 'pw',
+          );
+
+      await container.read(authProvider.notifier).checkEmailVerifiedNow();
+
+      expect(container.read(authProvider), const AuthState.normal());
+      expect(container.read(appStateProvider), const AppState.authenticated());
+    });
+
+    test(
+      'not verified yet -> feature error(emailNotVerified), global untouched',
+      () async {
+        when(() => signUp.call(any())).thenAnswer((_) async => Right(user));
+        when(
+          () => checkVerified.call(any()),
+        ).thenAnswer((_) async => const Right(false));
+        final container = makeContainer();
+        await container.read(authProvider.notifier).submitSignUp(
+              name: 'A',
+              email: 'a@b.com',
+              password: 'pw',
+            );
+
+        await container.read(authProvider.notifier).checkEmailVerifiedNow();
+
+        expect(
+          container.read(authProvider),
+          const AuthState.error(kind: AuthErrorKind.emailNotVerified),
+        );
+        expect(
+          container.read(appStateProvider),
+          const AppState.unauthenticated(),
+        );
+      },
+    );
+
+    test('failure -> feature error(general), global untouched', () async {
+      when(
+        () => checkVerified.call(any()),
+      ).thenAnswer(
+        (_) async => const Left(ServerFailure(code: 'x', message: 'boom')),
+      );
+      final container = makeContainer();
+
+      await container.read(authProvider.notifier).checkEmailVerifiedNow();
+
+      expect(
+        container.read(authProvider),
+        const AuthState.error(kind: AuthErrorKind.general, message: 'boom'),
+      );
+      expect(container.read(appStateProvider), const AppState.unauthenticated());
+    });
+  });
+
+  group('resendVerificationEmail', () {
+    test('success -> feature normal', () async {
+      when(
+        () => resendVerification.call(any()),
+      ).thenAnswer((_) async => const Right(unit));
+      final container = makeContainer();
+
+      await container.read(authProvider.notifier).resendVerificationEmail();
+
+      expect(container.read(authProvider), const AuthState.normal());
+    });
+
+    test('failure -> feature error(general)', () async {
+      when(() => resendVerification.call(any())).thenAnswer(
+        (_) async =>
+            const Left(ServerFailure(code: 'too-many-requests', message: '')),
+      );
+      final container = makeContainer();
+
+      await container.read(authProvider.notifier).resendVerificationEmail();
+
+      expect(
+        container.read(authProvider),
+        const AuthState.error(kind: AuthErrorKind.general, message: null),
+      );
+    });
   });
 
   test('reset() returns the feature to normal', () async {

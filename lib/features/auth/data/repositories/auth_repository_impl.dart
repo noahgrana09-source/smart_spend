@@ -143,6 +143,38 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> resendEmailVerification() async {
+    try {
+      await _remoteDataSource.sendEmailVerification();
+      return const Right(unit);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(code: e.code, message: e.message ?? ''));
+    } on AuthDataSourceException catch (e) {
+      return Left(ServerFailure(code: e.code, message: e.message));
+    } on Exception catch (e) {
+      return Left(ServerFailure(code: 'unknown-error', message: e.toString()));
+    } catch (e) {
+      return Left(ServerFailure(code: 'unknown-error', message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> checkEmailVerified() async {
+    try {
+      final isVerified = await _remoteDataSource.reloadAndCheckEmailVerified();
+      return Right(isVerified);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(code: e.code, message: e.message ?? ''));
+    } on AuthDataSourceException catch (e) {
+      return Left(ServerFailure(code: e.code, message: e.message));
+    } on Exception catch (e) {
+      return Left(ServerFailure(code: 'unknown-error', message: e.toString()));
+    } catch (e) {
+      return Left(ServerFailure(code: 'unknown-error', message: e.toString()));
+    }
+  }
+
+  @override
   UserEntity? getCurrentUser() {
     return _remoteDataSource.getCurrentUser()?.toEntity();
   }

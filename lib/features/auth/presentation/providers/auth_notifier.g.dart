@@ -8,14 +8,16 @@ part of 'auth_notifier.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Drives the login and register screens (they share this one notifier)
-/// and owns every session transition — sign-in / sign-up advance the
-/// global `appStateProvider` to [AppState.authenticated], `submitSignOut`
-/// takes it back to [AppState.unauthenticated].
+/// Drives the login, register, and email-verification screens (they share
+/// this one notifier) and owns every session transition — sign-in /
+/// Google advance the global `appStateProvider` straight to
+/// [AppState.authenticated]; sign-up advances it only once the email is
+/// confirmed verified (see [submitSignUp], [checkEmailVerifiedNow]).
+/// `submitSignOut` takes it back to [AppState.unauthenticated].
 ///
-/// `AuthState` (normal / loading / error) is the local screen state; a
-/// failed sign-in/up stays local, `AppState.error` is reserved for
-/// session-level problems.
+/// `AuthState` (normal / loading / verifying / error) is the local screen
+/// state; a failed sign-in/up stays local, `AppState.error` is reserved
+/// for session-level problems.
 ///
 /// `keepAlive`: these methods touch `ref` *after* an `await`, and are
 /// called fire-and-forget from screens that only `ref.read` this
@@ -29,14 +31,16 @@ part of 'auth_notifier.dart';
 @ProviderFor(AuthNotifier)
 final authProvider = AuthNotifierProvider._();
 
-/// Drives the login and register screens (they share this one notifier)
-/// and owns every session transition — sign-in / sign-up advance the
-/// global `appStateProvider` to [AppState.authenticated], `submitSignOut`
-/// takes it back to [AppState.unauthenticated].
+/// Drives the login, register, and email-verification screens (they share
+/// this one notifier) and owns every session transition — sign-in /
+/// Google advance the global `appStateProvider` straight to
+/// [AppState.authenticated]; sign-up advances it only once the email is
+/// confirmed verified (see [submitSignUp], [checkEmailVerifiedNow]).
+/// `submitSignOut` takes it back to [AppState.unauthenticated].
 ///
-/// `AuthState` (normal / loading / error) is the local screen state; a
-/// failed sign-in/up stays local, `AppState.error` is reserved for
-/// session-level problems.
+/// `AuthState` (normal / loading / verifying / error) is the local screen
+/// state; a failed sign-in/up stays local, `AppState.error` is reserved
+/// for session-level problems.
 ///
 /// `keepAlive`: these methods touch `ref` *after* an `await`, and are
 /// called fire-and-forget from screens that only `ref.read` this
@@ -48,14 +52,16 @@ final authProvider = AuthNotifierProvider._();
 /// explicit ([reset]), so there's nothing to lose by keeping it alive.
 final class AuthNotifierProvider
     extends $NotifierProvider<AuthNotifier, AuthState> {
-  /// Drives the login and register screens (they share this one notifier)
-  /// and owns every session transition — sign-in / sign-up advance the
-  /// global `appStateProvider` to [AppState.authenticated], `submitSignOut`
-  /// takes it back to [AppState.unauthenticated].
+  /// Drives the login, register, and email-verification screens (they share
+  /// this one notifier) and owns every session transition — sign-in /
+  /// Google advance the global `appStateProvider` straight to
+  /// [AppState.authenticated]; sign-up advances it only once the email is
+  /// confirmed verified (see [submitSignUp], [checkEmailVerifiedNow]).
+  /// `submitSignOut` takes it back to [AppState.unauthenticated].
   ///
-  /// `AuthState` (normal / loading / error) is the local screen state; a
-  /// failed sign-in/up stays local, `AppState.error` is reserved for
-  /// session-level problems.
+  /// `AuthState` (normal / loading / verifying / error) is the local screen
+  /// state; a failed sign-in/up stays local, `AppState.error` is reserved
+  /// for session-level problems.
   ///
   /// `keepAlive`: these methods touch `ref` *after* an `await`, and are
   /// called fire-and-forget from screens that only `ref.read` this
@@ -92,16 +98,18 @@ final class AuthNotifierProvider
   }
 }
 
-String _$authNotifierHash() => r'4ed08f45edc0cfa1142696965fb2dd7988355b32';
+String _$authNotifierHash() => r'42308a52be7b51998d8ccbe58cc7f9a477def001';
 
-/// Drives the login and register screens (they share this one notifier)
-/// and owns every session transition — sign-in / sign-up advance the
-/// global `appStateProvider` to [AppState.authenticated], `submitSignOut`
-/// takes it back to [AppState.unauthenticated].
+/// Drives the login, register, and email-verification screens (they share
+/// this one notifier) and owns every session transition — sign-in /
+/// Google advance the global `appStateProvider` straight to
+/// [AppState.authenticated]; sign-up advances it only once the email is
+/// confirmed verified (see [submitSignUp], [checkEmailVerifiedNow]).
+/// `submitSignOut` takes it back to [AppState.unauthenticated].
 ///
-/// `AuthState` (normal / loading / error) is the local screen state; a
-/// failed sign-in/up stays local, `AppState.error` is reserved for
-/// session-level problems.
+/// `AuthState` (normal / loading / verifying / error) is the local screen
+/// state; a failed sign-in/up stays local, `AppState.error` is reserved
+/// for session-level problems.
 ///
 /// `keepAlive`: these methods touch `ref` *after* an `await`, and are
 /// called fire-and-forget from screens that only `ref.read` this

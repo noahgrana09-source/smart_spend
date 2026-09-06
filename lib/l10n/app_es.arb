@@ -3,6 +3,7 @@
 
   "authLoginTitle": "Iniciar sesión",
   "authRegisterTitle": "Crear cuenta",
+  "authEmailVerificationTitle": "Verificá tu correo",
 
   "authEmailLabel": "Correo",
   "authPasswordLabel": "Contraseña",
@@ -12,6 +13,11 @@
   "authSignInButton": "Iniciar sesión",
   "authRegisterButton": "Crear cuenta",
   "authGoogleButton": "Continuar con Google",
+
+  "authEmailVerificationDescription": "Te enviamos un link de verificación a {email}. Revisá tu bandeja de entrada y, si no lo encontrás, buscá en la carpeta de spam.",
+  "authEmailVerifiedButton": "Correo verificado",
+  "authResendEmailButton": "Reenviar correo",
+  "authBackToRegisterButton": "Volver al registro",
 
   "authGoToRegisterPrompt": "¿No tenés cuenta?",
   "authGoToRegisterAction": "Registrate",
@@ -31,6 +37,7 @@
   "authErrorInvalidCredentials": "Correo o contraseña incorrectos",
   "authErrorEmailAlreadyInUse": "Ya existe una cuenta con este correo",
   "authErrorGeneric": "Algo salió mal. Probá de nuevo.",
+  "authErrorEmailNotVerified": "Tu correo todavía no está verificado",
 
   "authPasswordStrengthWeak": "Contraseña débil",
   "authPasswordStrengthStrong": "Contraseña fuerte"

@@ -477,6 +477,92 @@ void main() {
     });
   });
 
+  group('resendEmailVerification', () {
+    test('should return Right(unit) when the data source succeeds', () async {
+      when(
+        () => mockDataSource.sendEmailVerification(),
+      ).thenAnswer((_) async {});
+
+      final result = await repository.resendEmailVerification();
+
+      expect(result, const Right(unit));
+      verify(() => mockDataSource.sendEmailVerification()).called(1);
+    });
+
+    test('should return ServerFailure on generic Exception', () async {
+      when(
+        () => mockDataSource.sendEmailVerification(),
+      ).thenThrow(Exception('boom'));
+
+      final result = await repository.resendEmailVerification();
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect(failure.code, 'unknown-error');
+      }, (_) => fail('Should be Left'));
+    });
+
+    test(
+      'should return ServerFailure with the datasource code on AuthDataSourceException',
+      () async {
+        when(() => mockDataSource.sendEmailVerification()).thenThrow(
+          const AuthDataSourceException(
+            code: 'no-current-user',
+            message: 'No signed-in user',
+          ),
+        );
+
+        final result = await repository.resendEmailVerification();
+
+        expect(result.isLeft(), true);
+        result.fold((failure) {
+          expect(failure, isA<ServerFailure>());
+          expect(failure.code, 'no-current-user');
+        }, (_) => fail('Should be Left'));
+      },
+    );
+  });
+
+  group('checkEmailVerified', () {
+    test('should return Right(true) when the email is verified', () async {
+      when(
+        () => mockDataSource.reloadAndCheckEmailVerified(),
+      ).thenAnswer((_) async => true);
+
+      final result = await repository.checkEmailVerified();
+
+      expect(result, const Right(true));
+    });
+
+    test(
+      'should return Right(false) when the email is not verified yet',
+      () async {
+        when(
+          () => mockDataSource.reloadAndCheckEmailVerified(),
+        ).thenAnswer((_) async => false);
+
+        final result = await repository.checkEmailVerified();
+
+        expect(result, const Right(false));
+      },
+    );
+
+    test('should return ServerFailure on generic Exception', () async {
+      when(
+        () => mockDataSource.reloadAndCheckEmailVerified(),
+      ).thenThrow(Exception('boom'));
+
+      final result = await repository.checkEmailVerified();
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect(failure.code, 'unknown-error');
+      }, (_) => fail('Should be Left'));
+    });
+  });
+
   group('getCurrentUser', () {
     test('should return UserEntity when user is authenticated', () {
       when(() => mockDataSource.getCurrentUser()).thenReturn(tUserModel);

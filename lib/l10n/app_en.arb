@@ -3,6 +3,7 @@
 
   "authLoginTitle": "Sign in",
   "authRegisterTitle": "Create account",
+  "authEmailVerificationTitle": "Verify your email",
 
   "authEmailLabel": "Email",
   "authPasswordLabel": "Password",
@@ -12,6 +13,16 @@
   "authSignInButton": "Sign in",
   "authRegisterButton": "Create account",
   "authGoogleButton": "Continue with Google",
+
+  "authEmailVerificationDescription": "We sent a verification link to {email}. Check your inbox, and if you don't see it, look in your spam folder.",
+  "@authEmailVerificationDescription": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "authEmailVerifiedButton": "Email verified",
+  "authResendEmailButton": "Resend email",
+  "authBackToRegisterButton": "Back to register",
 
   "authGoToRegisterPrompt": "Don't have an account?",
   "authGoToRegisterAction": "Sign up",
@@ -36,6 +47,7 @@
   "authErrorInvalidCredentials": "Wrong email or password",
   "authErrorEmailAlreadyInUse": "An account with this email already exists",
   "authErrorGeneric": "Something went wrong. Please try again.",
+  "authErrorEmailNotVerified": "Your email isn't verified yet",
 
   "authPasswordStrengthWeak": "Weak password",
   "authPasswordStrengthStrong": "Strong password"

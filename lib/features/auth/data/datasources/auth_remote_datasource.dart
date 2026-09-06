@@ -65,6 +65,17 @@ abstract class AuthRemoteDataSource {
   /// Signs out the currently authenticated user from all providers.
   Future<void> signOut();
 
+  /// Re-sends the verification email to the currently signed-in user.
+  ///
+  /// Throws [AuthDataSourceException] if there is no signed-in user.
+  Future<void> sendEmailVerification();
+
+  /// Reloads the currently signed-in user and returns whether their email
+  /// is verified now.
+  ///
+  /// Throws [AuthDataSourceException] if there is no signed-in user.
+  Future<bool> reloadAndCheckEmailVerified();
+
   /// Returns the currently authenticated user, or `null` if not signed in.
   ///
   /// Reads [FirebaseAuth.currentUser] synchronously, which can spuriously
@@ -215,6 +226,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
 
     await user.updateDisplayName(name);
+    // Picks up the just-set displayName (unrelated to email verification —
+    // that's a separate reload in `reloadAndCheckEmailVerified`).
     await user.reload();
 
     final User? updatedUser = _firebaseAuth.currentUser;
@@ -236,6 +249,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       await _deleteUser(updatedUser);
       rethrow;
     }
+
+    // Best-effort: a failed send shouldn't fail the whole sign-up, since
+    // the verification screen offers a "resend" action for retrying.
+    try {
+      await updatedUser.sendEmailVerification();
+    } catch (_) {
+      // Ignored — the user can resend from the verification screen.
+    }
+
     return userModel;
   }
 
@@ -261,6 +283,31 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     } catch (_) {
       // Ignored — secondary cleanup.
     }
+  }
+
+  @override
+  Future<void> sendEmailVerification() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const AuthDataSourceException(
+        code: 'no-current-user',
+        message: 'No signed-in user to send a verification email to',
+      );
+    }
+    await user.sendEmailVerification();
+  }
+
+  @override
+  Future<bool> reloadAndCheckEmailVerified() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const AuthDataSourceException(
+        code: 'no-current-user',
+        message: 'No signed-in user to check email verification for',
+      );
+    }
+    await user.reload();
+    return _firebaseAuth.currentUser?.emailVerified ?? false;
   }
 
   @override
