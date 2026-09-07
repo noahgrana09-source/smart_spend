@@ -27,11 +27,18 @@ class EmailVerificationScreen extends ConsumerWidget {
   /// exists to trigger the initial navigation here.
   final String email;
 
+  /// Backing out here abandons the account this screen was created for —
+  /// so it deletes it rather than leaving an orphaned, unverified Firebase
+  /// Auth user nobody can ever reach again (see
+  /// `AuthNotifier.deleteUser`). Only pops on success; a failure stays on
+  /// this screen with the error banner so the user can retry instead of
+  /// silently losing track of the account.
   Future<void> _goBackToRegister(BuildContext context, WidgetRef ref) async {
-    // Same reset-around-navigation as `LoginScreen._openRegister`: don't
-    // let a leftover error here leak onto `RegisterScreen`'s banner.
-    ref.read(authProvider.notifier).reset();
-    Navigator.of(context).pop();
+    await ref.read(authProvider.notifier).deleteUser();
+    if (!context.mounted) return;
+    if (ref.read(authProvider) is AuthNormal) {
+      Navigator.of(context).pop();
+    }
   }
 
   @override

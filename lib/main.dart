@@ -25,9 +25,16 @@ void main() async {
   // survives the gap until the first frame reads it. Onboarding will add
   // an analogous check here once it exists. Runs entirely through
   // keepAlive providers — no auto-disposing notifier's `ref` in play.
+  //
+  // `isEmailVerified` matters here: a signed-up-but-unverified account
+  // has a perfectly valid persisted session, but must not skip past
+  // login — otherwise killing the app while `EmailVerificationScreen` is
+  // up (backgrounding it to open the verification link, say) and
+  // relaunching would land straight on `authenticated` without ever
+  // confirming verification.
   final restoredUser =
       await container.read(resolveCurrentUserUseCaseProvider).call();
-  if (restoredUser != null) {
+  if (restoredUser != null && restoredUser.isEmailVerified) {
     container
         .read(appStateProvider.notifier)
         .update(const AppState.authenticated());

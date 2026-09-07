@@ -49,6 +49,14 @@ abstract class AuthRepository {
   /// error.
   Future<Either<Failure, bool>> checkEmailVerified();
 
+  /// Deletes the currently signed-in user's Firebase Auth account.
+  ///
+  /// Used to clean up an unverified account the user is abandoning (e.g.
+  /// backing out of the post-sign-up email-verification screen) — without
+  /// this, the account (and its email) would sit unverified forever,
+  /// unreachable and unrecoverable.
+  Future<Either<Failure, Unit>> deleteUser();
+
   /// Returns the currently authenticated user, or `null` if not signed in.
   ///
   /// Can spuriously return `null` right after app startup, before

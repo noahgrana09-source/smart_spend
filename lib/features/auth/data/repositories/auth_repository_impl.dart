@@ -175,6 +175,23 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, Unit>> deleteUser() async {
+    try {
+      await _remoteDataSource.deleteCurrentUser();
+      unawaited(_clearLocalCache());
+      return const Right(unit);
+    } on FirebaseAuthException catch (e) {
+      return Left(AuthFailure(code: e.code, message: e.message ?? ''));
+    } on AuthDataSourceException catch (e) {
+      return Left(ServerFailure(code: e.code, message: e.message));
+    } on Exception catch (e) {
+      return Left(ServerFailure(code: 'unknown-error', message: e.toString()));
+    } catch (e) {
+      return Left(ServerFailure(code: 'unknown-error', message: e.toString()));
+    }
+  }
+
+  @override
   UserEntity? getCurrentUser() {
     return _remoteDataSource.getCurrentUser()?.toEntity();
   }

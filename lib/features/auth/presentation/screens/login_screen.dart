@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/utils/platform_utils.dart';
@@ -50,6 +51,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
         );
+    // A successful sign-in resets the feature state to `normal` (a
+    // failure would be `AuthError` instead) — tell the platform the
+    // credentials just entered are good, so it can offer to save them.
+    if (ref.read(authProvider) is AuthNormal) {
+      TextInput.finishAutofillContext();
+    }
     // The screen rebuilds with the new AuthState next frame; re-run the
     // validators *after* that, so a server-side "wrong email or
     // password" (which the field validators only return once the
@@ -113,58 +120,63 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       title: l10n.authLoginTitle,
       child: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AuthErrorBanner(message: generalError),
-            if (generalError != null) const SizedBox(height: 16),
-            AuthTextField(
-              controller: _emailController,
-              label: l10n.authEmailLabel,
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
-              onChanged: clearCredentialError,
-              validator: (value) {
-                final error = AuthValidators.email(value);
-                if (error != null) return authFieldErrorMessage(l10n, error);
-                return credentialError;
-              },
-            ),
-            const SizedBox(height: 16),
-            AuthTextField(
-              controller: _passwordController,
-              label: l10n.authPasswordLabel,
-              enablePassword: true,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.password],
-              onChanged: clearCredentialError,
-              onFieldSubmitted: (_) => _submitEmail(),
-              validator: (value) {
-                final error = AuthValidators.signInPassword(value);
-                if (error != null) return authFieldErrorMessage(l10n, error);
-                return credentialError;
-              },
-            ),
-            const SizedBox(height: 24),
-            AuthPrimaryButton(
-              label: l10n.authSignInButton,
-              onPressed: isLoading ? null : _submitEmail,
-              isLoading: isLoading,
-            ),
-            const SizedBox(height: 12),
-            GoogleSignInButton(
-              label: l10n.authGoogleButton,
-              onPressed: isLoading ? null : _submitGoogle,
-              isLoading: isLoading,
-            ),
-            const SizedBox(height: 8),
-            AuthModeLink(
-              prompt: l10n.authGoToRegisterPrompt,
-              action: l10n.authGoToRegisterAction,
-              onTap: _openRegister,
-            ),
-          ],
+        // Groups the email and password fields into one autofill context,
+        // so a tap on either offers the matching saved credential pair
+        // instead of just the field that was tapped.
+        child: AutofillGroup(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AuthErrorBanner(message: generalError),
+              if (generalError != null) const SizedBox(height: 16),
+              AuthTextField(
+                controller: _emailController,
+                label: l10n.authEmailLabel,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.email],
+                onChanged: clearCredentialError,
+                validator: (value) {
+                  final error = AuthValidators.email(value);
+                  if (error != null) return authFieldErrorMessage(l10n, error);
+                  return credentialError;
+                },
+              ),
+              const SizedBox(height: 16),
+              AuthTextField(
+                controller: _passwordController,
+                label: l10n.authPasswordLabel,
+                enablePassword: true,
+                textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.password],
+                onChanged: clearCredentialError,
+                onFieldSubmitted: (_) => _submitEmail(),
+                validator: (value) {
+                  final error = AuthValidators.signInPassword(value);
+                  if (error != null) return authFieldErrorMessage(l10n, error);
+                  return credentialError;
+                },
+              ),
+              const SizedBox(height: 24),
+              AuthPrimaryButton(
+                label: l10n.authSignInButton,
+                onPressed: isLoading ? null : _submitEmail,
+                isLoading: isLoading,
+              ),
+              const SizedBox(height: 12),
+              GoogleSignInButton(
+                label: l10n.authGoogleButton,
+                onPressed: isLoading ? null : _submitGoogle,
+                isLoading: isLoading,
+              ),
+              const SizedBox(height: 8),
+              AuthModeLink(
+                prompt: l10n.authGoToRegisterPrompt,
+                action: l10n.authGoToRegisterAction,
+                onTap: _openRegister,
+              ),
+            ],
+          ),
         ),
       ),
     );

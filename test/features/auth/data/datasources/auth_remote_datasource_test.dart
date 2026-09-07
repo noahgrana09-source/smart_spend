@@ -411,6 +411,67 @@ void main() {
     );
   });
 
+  group('deleteCurrentUser', () {
+    test('deletes the current user and their Firestore profile', () async {
+      when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+      when(() => mockUser.delete()).thenAnswer((_) async {});
+      when(() => mockDocRef.delete()).thenAnswer((_) async {});
+
+      await dataSource.deleteCurrentUser();
+
+      verify(() => mockUser.delete()).called(1);
+      verify(() => mockCollection.doc('uid-123')).called(1);
+      verify(() => mockDocRef.delete()).called(1);
+    });
+
+    test(
+      'still succeeds when deleting the Firestore profile fails (best-effort)',
+      () async {
+        when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+        when(() => mockUser.delete()).thenAnswer((_) async {});
+        when(() => mockDocRef.delete()).thenThrow(
+          FirebaseException(plugin: 'cloud_firestore', code: 'unavailable'),
+        );
+
+        await dataSource.deleteCurrentUser(); // must not throw
+
+        verify(() => mockUser.delete()).called(1);
+      },
+    );
+
+    test('propagates a failure deleting the user (unlike rollback deletes)',
+        () async {
+      when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+      when(
+        () => mockUser.delete(),
+      ).thenThrow(FirebaseAuthException(code: 'requires-recent-login'));
+
+      await expectLater(
+        () => dataSource.deleteCurrentUser(),
+        throwsA(isA<FirebaseAuthException>()),
+      );
+      verifyNever(() => mockDocRef.delete());
+    });
+
+    test(
+      'throws AuthDataSourceException with a no-current-user code when there is no signed-in user',
+      () async {
+        when(() => mockFirebaseAuth.currentUser).thenReturn(null);
+
+        await expectLater(
+          () => dataSource.deleteCurrentUser(),
+          throwsA(
+            isA<AuthDataSourceException>().having(
+              (e) => e.code,
+              'code',
+              'no-current-user',
+            ),
+          ),
+        );
+      },
+    );
+  });
+
   group('getCurrentUser', () {
     test('returns null when there is no signed-in user', () {
       when(() => mockFirebaseAuth.currentUser).thenReturn(null);
@@ -444,8 +505,9 @@ void main() {
     );
 
     test(
-      'returns the UserModel from the first authStateChanges event',
+      'an already-verified session is returned without reloading',
       () async {
+        when(() => mockUser.emailVerified).thenReturn(true);
         when(
           () => mockFirebaseAuth.authStateChanges(),
         ).thenAnswer((_) => Stream.value(mockUser));
@@ -453,6 +515,55 @@ void main() {
         final result = await dataSource.resolveCurrentUser();
 
         expect(result?.uid, 'uid-123');
+        expect(result?.isEmailVerified, true);
+        verifyNever(() => mockUser.reload());
+      },
+    );
+
+    test(
+      'an unverified session reloads and re-reads the fresh currentUser '
+      '(the cached emailVerified flag can be stale)',
+      () async {
+        when(() => mockUser.emailVerified).thenReturn(false);
+        when(
+          () => mockFirebaseAuth.authStateChanges(),
+        ).thenAnswer((_) => Stream.value(mockUser));
+        when(() => mockUser.reload()).thenAnswer((_) async {});
+
+        // A distinct instance for what `currentUser` returns *after* the
+        // reload, so the assertion can only pass if the method actually
+        // re-reads it instead of reusing the stale stream value.
+        final reloadedUser = MockFirebaseUser();
+        when(() => reloadedUser.uid).thenReturn('uid-123');
+        when(() => reloadedUser.email).thenReturn('test@example.com');
+        when(() => reloadedUser.displayName).thenReturn('Test User');
+        when(() => reloadedUser.photoURL).thenReturn(null);
+        when(() => reloadedUser.emailVerified).thenReturn(true);
+        when(() => reloadedUser.metadata).thenReturn(mockMetadata);
+        when(() => mockFirebaseAuth.currentUser).thenReturn(reloadedUser);
+
+        final result = await dataSource.resolveCurrentUser();
+
+        verify(() => mockUser.reload()).called(1);
+        expect(result?.isEmailVerified, true);
+      },
+    );
+
+    test(
+      'falls back to the stale cached value when the reload fails '
+      '(e.g. offline)',
+      () async {
+        when(() => mockUser.emailVerified).thenReturn(false);
+        when(
+          () => mockFirebaseAuth.authStateChanges(),
+        ).thenAnswer((_) => Stream.value(mockUser));
+        when(() => mockUser.reload()).thenThrow(Exception('offline'));
+        when(() => mockFirebaseAuth.currentUser).thenReturn(null);
+
+        final result = await dataSource.resolveCurrentUser();
+
+        expect(result?.uid, 'uid-123');
+        expect(result?.isEmailVerified, false);
       },
     );
   });

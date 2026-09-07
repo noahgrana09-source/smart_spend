@@ -9,6 +9,7 @@ import 'package:smart_spend/core/state/state_providers.dart';
 import 'package:smart_spend/core/usecases/usecase.dart';
 import 'package:smart_spend/features/auth/domain/entities/user_entity.dart';
 import 'package:smart_spend/features/auth/domain/usecases/check_email_verified_usecase.dart';
+import 'package:smart_spend/features/auth/domain/usecases/delete_user_usecase.dart';
 import 'package:smart_spend/features/auth/domain/usecases/resend_email_verification_usecase.dart';
 import 'package:smart_spend/features/auth/domain/usecases/sign_in_with_email_usecase.dart';
 import 'package:smart_spend/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
@@ -33,6 +34,8 @@ class _MockResendEmailVerification extends Mock
 class _MockCheckEmailVerified extends Mock
     implements CheckEmailVerifiedUseCase {}
 
+class _MockDeleteUser extends Mock implements DeleteUserUseCase {}
+
 void main() {
   late _MockSignInWithEmail signIn;
   late _MockSignUpWithEmail signUp;
@@ -40,6 +43,7 @@ void main() {
   late _MockSignOut signOut;
   late _MockResendEmailVerification resendVerification;
   late _MockCheckEmailVerified checkVerified;
+  late _MockDeleteUser deleteUser;
 
   final user = UserEntity(
     uid: 'u1',
@@ -64,6 +68,7 @@ void main() {
     signOut = _MockSignOut();
     resendVerification = _MockResendEmailVerification();
     checkVerified = _MockCheckEmailVerified();
+    deleteUser = _MockDeleteUser();
   });
 
   ProviderContainer makeContainer() {
@@ -77,6 +82,7 @@ void main() {
           resendVerification,
         ),
         checkEmailVerifiedUseCaseProvider.overrideWithValue(checkVerified),
+        deleteUserUseCaseProvider.overrideWithValue(deleteUser),
       ],
     );
     addTearDown(container.dispose);
@@ -356,6 +362,37 @@ void main() {
       expect(
         container.read(authProvider),
         const AuthState.error(kind: AuthErrorKind.general, message: null),
+      );
+    });
+  });
+
+  group('deleteUser', () {
+    test('success -> feature normal', () async {
+      when(
+        () => deleteUser.call(any()),
+      ).thenAnswer((_) async => const Right(unit));
+      final container = makeContainer();
+
+      await container.read(authProvider.notifier).deleteUser();
+
+      expect(container.read(authProvider), const AuthState.normal());
+    });
+
+    test('failure -> feature error(general)', () async {
+      when(() => deleteUser.call(any())).thenAnswer(
+        (_) async =>
+            const Left(ServerFailure(code: 'x', message: 'Try again later')),
+      );
+      final container = makeContainer();
+
+      await container.read(authProvider.notifier).deleteUser();
+
+      expect(
+        container.read(authProvider),
+        const AuthState.error(
+          kind: AuthErrorKind.general,
+          message: 'Try again later',
+        ),
       );
     });
   });

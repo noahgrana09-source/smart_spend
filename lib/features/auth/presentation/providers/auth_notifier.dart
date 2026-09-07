@@ -101,6 +101,19 @@ class AuthNotifier extends _$AuthNotifier {
     state = result.fold(_mapFailure, (_) => const AuthState.normal());
   }
 
+  /// Called from `EmailVerificationScreen`'s "back to register" button.
+  /// Without this, backing out of that screen would leave the just-created
+  /// account sitting unverified in Firebase Auth forever — unreachable
+  /// (the user walked away from it) and unrecoverable (nothing ever
+  /// deletes it), which defeats the point of requiring verification at
+  /// all. A failure surfaces as a general error for the screen's banner;
+  /// success returns to normal so the screen can pop.
+  Future<void> deleteUser() async {
+    state = const AuthState.loading();
+    final result = await ref.read(deleteUserUseCaseProvider).call(const NoParams());
+    state = result.fold(_mapFailure, (_) => const AuthState.normal());
+  }
+
   Future<void> submitGoogle() {
     return _run(
       () => ref.read(signInWithGoogleUseCaseProvider).call(const NoParams()),

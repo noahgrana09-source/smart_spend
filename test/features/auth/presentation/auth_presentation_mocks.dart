@@ -1,5 +1,6 @@
 import 'package:mocktail/mocktail.dart';
 import 'package:smart_spend/features/auth/domain/usecases/check_email_verified_usecase.dart';
+import 'package:smart_spend/features/auth/domain/usecases/delete_user_usecase.dart';
 import 'package:smart_spend/features/auth/domain/usecases/resend_email_verification_usecase.dart';
 import 'package:smart_spend/features/auth/domain/usecases/sign_in_with_email_usecase.dart';
 import 'package:smart_spend/features/auth/domain/usecases/sign_in_with_google_usecase.dart';
@@ -20,3 +21,5 @@ class MockResendEmailVerificationUseCase extends Mock
 
 class MockCheckEmailVerifiedUseCase extends Mock
     implements CheckEmailVerifiedUseCase {}
+
+class MockDeleteUserUseCase extends Mock implements DeleteUserUseCase {}

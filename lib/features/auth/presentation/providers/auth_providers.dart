@@ -9,6 +9,7 @@ import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/usecases/check_email_verified_usecase.dart';
+import '../../domain/usecases/delete_user_usecase.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
 import '../../domain/usecases/resend_email_verification_usecase.dart';
 import '../../domain/usecases/resolve_current_user_usecase.dart';
@@ -77,6 +78,10 @@ ResendEmailVerificationUseCase resendEmailVerificationUseCase(Ref ref) =>
 @Riverpod(keepAlive: true)
 CheckEmailVerifiedUseCase checkEmailVerifiedUseCase(Ref ref) =>
     CheckEmailVerifiedUseCase(ref.watch(authRepositoryProvider));
+
+@Riverpod(keepAlive: true)
+DeleteUserUseCase deleteUserUseCase(Ref ref) =>
+    DeleteUserUseCase(ref.watch(authRepositoryProvider));
 
 @Riverpod(keepAlive: true)
 GetCurrentUserUseCase getCurrentUserUseCase(Ref ref) =>

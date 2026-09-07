@@ -563,6 +563,60 @@ void main() {
     });
   });
 
+  group('deleteUser', () {
+    test('should return Right(unit) when the data source succeeds', () async {
+      when(() => mockDataSource.deleteCurrentUser()).thenAnswer((_) async {});
+
+      final result = await repository.deleteUser();
+
+      expect(result, const Right(unit));
+      verify(() => mockDataSource.deleteCurrentUser()).called(1);
+    });
+
+    test('should return ServerFailure on generic Exception', () async {
+      when(
+        () => mockDataSource.deleteCurrentUser(),
+      ).thenThrow(Exception('boom'));
+
+      final result = await repository.deleteUser();
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect(failure.code, 'unknown-error');
+      }, (_) => fail('Should be Left'));
+    });
+
+    test(
+      'should return ServerFailure with the datasource code on AuthDataSourceException',
+      () async {
+        when(() => mockDataSource.deleteCurrentUser()).thenThrow(
+          const AuthDataSourceException(
+            code: 'no-current-user',
+            message: 'No signed-in user',
+          ),
+        );
+
+        final result = await repository.deleteUser();
+
+        expect(result.isLeft(), true);
+        result.fold((failure) {
+          expect(failure, isA<ServerFailure>());
+          expect(failure.code, 'no-current-user');
+        }, (_) => fail('Should be Left'));
+      },
+    );
+
+    test('clears the local cache after a successful delete', () async {
+      when(() => mockDataSource.deleteCurrentUser()).thenAnswer((_) async {});
+
+      await repository.deleteUser();
+      await untilCalled(() => mockLocalDataSource.clear());
+
+      verify(() => mockLocalDataSource.clear()).called(1);
+    });
+  });
+
   group('getCurrentUser', () {
     test('should return UserEntity when user is authenticated', () {
       when(() => mockDataSource.getCurrentUser()).thenReturn(tUserModel);

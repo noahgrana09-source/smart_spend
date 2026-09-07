@@ -76,6 +76,14 @@ abstract class AuthRemoteDataSource {
   /// Throws [AuthDataSourceException] if there is no signed-in user.
   Future<bool> reloadAndCheckEmailVerified();
 
+  /// Deletes the currently signed-in user from Firebase Auth.
+  ///
+  /// Unlike the best-effort rollback used internally during sign-up,
+  /// this propagates any failure — it's a deliberate, user-facing
+  /// deletion, not secondary cleanup. Throws [AuthDataSourceException] if
+  /// there is no signed-in user.
+  Future<void> deleteCurrentUser();
+
   /// Returns the currently authenticated user, or `null` if not signed in.
   ///
   /// Reads [FirebaseAuth.currentUser] synchronously, which can spuriously
@@ -181,7 +189,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // existing user must never be deleted over a transient failure
       // reading/writing its profile.
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        await _deleteUser(user);
+        try {
+          await _deleteUser(user);
+        } catch (_) {
+          // Ignored: nothing more we can do here — the persistence
+          // error below is what gets surfaced regardless.
+        }
       }
       rethrow;
     }
@@ -246,7 +259,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // always safe to roll it back: undo the sign-up rather than
       // leaving an orphaned Firebase Auth account with no profile,
       // which would block retrying with the same email.
-      await _deleteUser(updatedUser);
+      try {
+        await _deleteUser(updatedUser);
+      } catch (_) {
+        // Ignored: nothing more we can do here — the persistence error
+        // below is what gets surfaced regardless.
+      }
       rethrow;
     }
 
@@ -311,6 +329,18 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<void> deleteCurrentUser() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const AuthDataSourceException(
+        code: 'no-current-user',
+        message: 'No signed-in user to delete',
+      );
+    }
+    await _deleteUser(user);
+  }
+
+  @override
   UserModel? getCurrentUser() {
     final User? user = _firebaseAuth.currentUser;
     if (user == null) return null;
@@ -321,7 +351,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<UserModel?> resolveCurrentUser() async {
     final User? user = await _firebaseAuth.authStateChanges().first;
     if (user == null) return null;
-    return UserModel.fromFirebaseUser(user);
+
+    // The cached `emailVerified` flag can be stale: verifying happens by
+    // opening a link outside the app (email client / browser), so
+    // nothing local ever refreshes it on its own — a session restored
+    // right after that would otherwise still read `false` here. Only
+    // worth reloading when it does: once true, it never goes back to
+    // false, so there's nothing to gain from reloading an
+    // already-verified session on every cold start.
+    if (!user.emailVerified) {
+      try {
+        await user.reload();
+      } catch (_) {
+        // Best-effort (e.g. offline) — fall back to the cached value.
+      }
+    }
+    return UserModel.fromFirebaseUser(_firebaseAuth.currentUser ?? user);
   }
 
   @override
@@ -331,14 +376,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     return UserModel.fromFirestore(doc);
   }
 
-  /// Best-effort rollback: deletes [user] if the account was left
-  /// without a persisted profile. Swallows any secondary failure so
-  /// the original persistence error is what gets surfaced regardless.
+  /// Deletes [user] from Firebase Auth, and best-effort deletes their
+  /// `users/{uid}` Firestore profile alongside it — once Auth is gone
+  /// (the part that actually frees up the email address), a stray
+  /// leftover profile doc isn't worth blocking on or reporting as a
+  /// failure.
+  ///
+  /// Deleting [user] itself still propagates — callers that use this for
+  /// best-effort rollback (an account left without a persisted profile)
+  /// catch around their own call instead, so the original persistence
+  /// error is what gets surfaced regardless; [deleteCurrentUser] lets it
+  /// propagate on purpose.
   Future<void> _deleteUser(User user) async {
+    await user.delete();
     try {
-      await user.delete();
+      await _firestore.collection('users').doc(user.uid).delete();
     } catch (_) {
-      // Ignored: nothing more we can do here.
+      // Best-effort — see the doc comment above.
     }
   }
 

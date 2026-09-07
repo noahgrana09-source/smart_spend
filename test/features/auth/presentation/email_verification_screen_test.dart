@@ -16,6 +16,7 @@ import 'auth_presentation_mocks.dart';
 void main() {
   late MockCheckEmailVerifiedUseCase checkVerified;
   late MockResendEmailVerificationUseCase resendVerification;
+  late MockDeleteUserUseCase deleteUser;
 
   setUpAll(() {
     registerFallbackValue(const NoParams());
@@ -24,6 +25,7 @@ void main() {
   setUp(() {
     checkVerified = MockCheckEmailVerifiedUseCase();
     resendVerification = MockResendEmailVerificationUseCase();
+    deleteUser = MockDeleteUserUseCase();
   });
 
   Future<ProviderContainer> pumpScreen(
@@ -36,6 +38,7 @@ void main() {
         resendEmailVerificationUseCaseProvider.overrideWithValue(
           resendVerification,
         ),
+        deleteUserUseCaseProvider.overrideWithValue(deleteUser),
       ],
     );
     addTearDown(container.dispose);
@@ -128,13 +131,14 @@ void main() {
     expect(find.text('Try again later'), findsOneWidget);
   });
 
-  testWidgets('tapping "Back to register" pops the screen', (tester) async {
+  Future<ProviderContainer> pumpBehindAPushedRoute(WidgetTester tester) async {
     final container = ProviderContainer(
       overrides: [
         checkEmailVerifiedUseCaseProvider.overrideWithValue(checkVerified),
         resendEmailVerificationUseCaseProvider.overrideWithValue(
           resendVerification,
         ),
+        deleteUserUseCaseProvider.overrideWithValue(deleteUser),
       ],
     );
     addTearDown(container.dispose);
@@ -166,11 +170,42 @@ void main() {
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
     expect(find.text('Back to register'), findsOneWidget);
+    return container;
+  }
 
-    await tester.tap(find.text('Back to register'));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'tapping "Back to register" deletes the account and pops on success',
+    (tester) async {
+      when(
+        () => deleteUser.call(any()),
+      ).thenAnswer((_) async => const Right(unit));
+      await pumpBehindAPushedRoute(tester);
 
-    expect(find.text('open'), findsOneWidget);
-    expect(find.text('Back to register'), findsNothing);
-  });
+      await tester.tap(find.text('Back to register'));
+      await tester.pumpAndSettle();
+
+      verify(() => deleteUser.call(any())).called(1);
+      expect(find.text('open'), findsOneWidget);
+      expect(find.text('Back to register'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'tapping "Back to register" stays on screen and shows the banner on '
+    'failure',
+    (tester) async {
+      when(() => deleteUser.call(any())).thenAnswer(
+        (_) async =>
+            const Left(ServerFailure(code: 'x', message: 'Try again later')),
+      );
+      await pumpBehindAPushedRoute(tester);
+
+      await tester.tap(find.text('Back to register'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('open'), findsNothing);
+      expect(find.text('Back to register'), findsOneWidget);
+      expect(find.text('Try again later'), findsOneWidget);
+    },
+  );
 }

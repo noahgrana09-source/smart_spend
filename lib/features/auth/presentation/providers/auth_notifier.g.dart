@@ -98,7 +98,7 @@ final class AuthNotifierProvider
   }
 }
 
-String _$authNotifierHash() => r'42308a52be7b51998d8ccbe58cc7f9a477def001';
+String _$authNotifierHash() => r'8af4a564ff0f14b5dee95741f7f906bd83dd111b';
 
 /// Drives the login, register, and email-verification screens (they share
 /// this one notifier) and owns every session transition — sign-in /

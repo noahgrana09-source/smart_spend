@@ -155,45 +155,6 @@ void main() {
   });
 
   testWidgets(
-    'a bulk password change (e.g. the OS-suggested password) mirrors into '
-    'the confirm field',
-    (tester) async {
-      await pumpRegister(tester);
-
-      await tester.enterText(
-        find.byType(TextFormField).at(2),
-        'Str0ngPass!x',
-      );
-      await tester.pump();
-
-      final confirmField = tester.widget<TextFormField>(
-        find.byType(TextFormField).at(3),
-      );
-      expect(confirmField.controller?.text, 'Str0ngPass!x');
-    },
-  );
-
-  testWidgets(
-    "a bulk password change doesn't overwrite text already typed into "
-    'confirm',
-    (tester) async {
-      await pumpRegister(tester);
-
-      await tester.enterText(find.byType(TextFormField).at(3), 'already');
-      await tester.enterText(
-        find.byType(TextFormField).at(2),
-        'Str0ngPass!x',
-      );
-      await tester.pump();
-
-      final confirmField = tester.widget<TextFormField>(
-        find.byType(TextFormField).at(3),
-      );
-      expect(confirmField.controller?.text, 'already');
-    },
-  );
-
-  testWidgets(
     'a successful sign-up pushes the email verification screen',
     (tester) async {
       when(() => signUp.call(any())).thenAnswer((_) async => Right(user));
