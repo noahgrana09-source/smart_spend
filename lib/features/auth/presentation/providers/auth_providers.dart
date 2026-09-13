@@ -8,13 +8,15 @@ import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
+import '../../domain/usecases/check_email_verified_usecase.dart';
+import '../../domain/usecases/delete_user_usecase.dart';
 import '../../domain/usecases/get_current_user_usecase.dart';
+import '../../domain/usecases/resend_email_verification_usecase.dart';
 import '../../domain/usecases/resolve_current_user_usecase.dart';
 import '../../domain/usecases/sign_in_with_email_usecase.dart';
 import '../../domain/usecases/sign_in_with_google_usecase.dart';
 import '../../domain/usecases/sign_out_usecase.dart';
 import '../../domain/usecases/sign_up_with_email_usecase.dart';
-import '../../domain/usecases/watch_current_user_usecase.dart';
 
 part 'auth_providers.g.dart';
 
@@ -69,13 +71,21 @@ SignOutUseCase signOutUseCase(Ref ref) =>
     SignOutUseCase(ref.watch(authRepositoryProvider));
 
 @Riverpod(keepAlive: true)
+ResendEmailVerificationUseCase resendEmailVerificationUseCase(Ref ref) =>
+    ResendEmailVerificationUseCase(ref.watch(authRepositoryProvider));
+
+@Riverpod(keepAlive: true)
+CheckEmailVerifiedUseCase checkEmailVerifiedUseCase(Ref ref) =>
+    CheckEmailVerifiedUseCase(ref.watch(authRepositoryProvider));
+
+@Riverpod(keepAlive: true)
+DeleteUserUseCase deleteUserUseCase(Ref ref) =>
+    DeleteUserUseCase(ref.watch(authRepositoryProvider));
+
+@Riverpod(keepAlive: true)
 GetCurrentUserUseCase getCurrentUserUseCase(Ref ref) =>
     GetCurrentUserUseCase(ref.watch(authRepositoryProvider));
 
 @Riverpod(keepAlive: true)
 ResolveCurrentUserUseCase resolveCurrentUserUseCase(Ref ref) =>
     ResolveCurrentUserUseCase(ref.watch(authRepositoryProvider));
-
-@Riverpod(keepAlive: true)
-WatchCurrentUserUseCase watchCurrentUserUseCase(Ref ref) =>
-    WatchCurrentUserUseCase(ref.watch(authRepositoryProvider));

@@ -18,11 +18,12 @@ part of 'app_router.dart';
 /// (`ref.read`, not `ref.watch` — this provider is built once and
 /// doesn't need to rebuild when the state changes later, that's what
 /// [AppStateListener] is for) rather than assuming
-/// [AppState.unauthenticated]. `main()` awaits its session-bootstrap
-/// step before `runApp()`, so by the time this router is first built, a
-/// restored session has already moved `appStateProvider` to
-/// [AppState.authenticated] — hardcoding `unauthenticated` here would
-/// always open on `/login` regardless.
+/// [AppState.unauthenticated]. Nothing sets `appStateProvider` before
+/// this router is first built anymore (`main()` is deliberately a
+/// master key with no session logic — see its doc comment), so today
+/// this always resolves to `/login`; the `ref.read` stays as the
+/// correct general contract for whichever feature wrapper sets
+/// `appStateProvider` next, at whatever point that happens to be.
 
 @ProviderFor(appRouter)
 final appRouterProvider = AppRouterProvider._();
@@ -37,11 +38,12 @@ final appRouterProvider = AppRouterProvider._();
 /// (`ref.read`, not `ref.watch` — this provider is built once and
 /// doesn't need to rebuild when the state changes later, that's what
 /// [AppStateListener] is for) rather than assuming
-/// [AppState.unauthenticated]. `main()` awaits its session-bootstrap
-/// step before `runApp()`, so by the time this router is first built, a
-/// restored session has already moved `appStateProvider` to
-/// [AppState.authenticated] — hardcoding `unauthenticated` here would
-/// always open on `/login` regardless.
+/// [AppState.unauthenticated]. Nothing sets `appStateProvider` before
+/// this router is first built anymore (`main()` is deliberately a
+/// master key with no session logic — see its doc comment), so today
+/// this always resolves to `/login`; the `ref.read` stays as the
+/// correct general contract for whichever feature wrapper sets
+/// `appStateProvider` next, at whatever point that happens to be.
 
 final class AppRouterProvider
     extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
@@ -56,11 +58,12 @@ final class AppRouterProvider
   /// (`ref.read`, not `ref.watch` — this provider is built once and
   /// doesn't need to rebuild when the state changes later, that's what
   /// [AppStateListener] is for) rather than assuming
-  /// [AppState.unauthenticated]. `main()` awaits its session-bootstrap
-  /// step before `runApp()`, so by the time this router is first built, a
-  /// restored session has already moved `appStateProvider` to
-  /// [AppState.authenticated] — hardcoding `unauthenticated` here would
-  /// always open on `/login` regardless.
+  /// [AppState.unauthenticated]. Nothing sets `appStateProvider` before
+  /// this router is first built anymore (`main()` is deliberately a
+  /// master key with no session logic — see its doc comment), so today
+  /// this always resolves to `/login`; the `ref.read` stays as the
+  /// correct general contract for whichever feature wrapper sets
+  /// `appStateProvider` next, at whatever point that happens to be.
   AppRouterProvider._()
     : super(
         from: null,
@@ -94,4 +97,4 @@ final class AppRouterProvider
   }
 }
 
-String _$appRouterHash() => r'e99a9e22606b68065abb1c622c1034601f09738a';
+String _$appRouterHash() => r'5405e2f5b6d9f9f0811fff7497d434435ce51dff';

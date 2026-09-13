@@ -4,15 +4,14 @@ import 'app_states.dart';
 
 part 'state_providers.g.dart';
 
-/// Starts unauthenticated; the `auth` feature updates this once login,
-/// onboarding, or an error is resolved.
+/// Starts unauthenticated; the `auth` feature (`AuthWrapper`, at boot;
+/// `AuthNotifier`, on sign-in/up/out) updates this once a session
+/// resolves, onboarding finishes, or an error occurs.
 ///
-/// `keepAlive`: this is app-lifetime global state. It must never
-/// auto-dispose — the session bootstrap in `main()` sets it during an
-/// awaited step, before the widget tree exists to hold a listener, and
-/// an auto-disposing provider would garbage-collect that value before
-/// the first frame reads it (the app would then always open on login
-/// despite a restored session).
+/// `keepAlive`: this is app-lifetime global state, read and updated from
+/// across the whole app for as long as it runs — auto-disposing it the
+/// moment nothing happens to be watching it would lose that state
+/// outright.
 @Riverpod(keepAlive: true)
 class AppStateNotifier extends _$AppStateNotifier {
   @override

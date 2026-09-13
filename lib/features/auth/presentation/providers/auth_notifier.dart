@@ -13,14 +13,16 @@ import 'auth_state.dart';
 
 part 'auth_notifier.g.dart';
 
-/// Drives the login and register screens (they share this one notifier)
-/// and owns every session transition — sign-in / sign-up advance the
-/// global `appStateProvider` to [AppState.authenticated], `submitSignOut`
-/// takes it back to [AppState.unauthenticated].
+/// Drives the login, register, and email-verification screens (they share
+/// this one notifier) and owns every session transition — sign-in /
+/// Google advance the global `appStateProvider` straight to
+/// [AppState.authenticated]; sign-up advances it only once the email is
+/// confirmed verified (see [submitSignUp], [checkEmailVerifiedNow]).
+/// `submitSignOut` takes it back to [AppState.unauthenticated].
 ///
-/// `AuthState` (normal / loading / error) is the local screen state; a
-/// failed sign-in/up stays local, `AppState.error` is reserved for
-/// session-level problems.
+/// `AuthState` (normal / loading / verifying / error) is the local screen
+/// state; a failed sign-in/up stays local, `AppState.error` is reserved
+/// for session-level problems.
 ///
 /// `keepAlive`: these methods touch `ref` *after* an `await`, and are
 /// called fire-and-forget from screens that only `ref.read` this
@@ -40,6 +42,21 @@ class AuthNotifier extends _$AuthNotifier {
   /// doesn't leak onto the other — see `_openRegister`.
   void reset() => state = const AuthState.normal();
 
+  /// Called by `AuthWrapper` when it finds an existing-but-unverified
+  /// session at boot — puts the feature into the same [AuthState.verifying]
+  /// a fresh [submitSignUp] produces, so `AuthWrapper` reacts to either
+  /// origin the same way (swapping to `EmailVerificationScreen`).
+  ///
+  /// Guarded on the current state still being [AuthState.normal]: the
+  /// async gap between `AuthWrapper` starting its resolve and this being
+  /// called is small but non-zero, and this must never clobber something
+  /// the user is actively doing on `LoginScreen` in that window (a
+  /// sign-in in flight, or one that already failed).
+  void resumeVerifying({required String email}) {
+    if (state is! AuthNormal) return;
+    state = AuthState.verifying(email: email);
+  }
+
   Future<void> submitSignIn({
     required String email,
     required String password,
@@ -51,22 +68,65 @@ class AuthNotifier extends _$AuthNotifier {
     );
   }
 
+  /// Unlike [submitSignIn]/[submitGoogle] (which run through [_run]), a
+  /// successful sign-up doesn't advance the global `AppState` yet — it
+  /// moves to [AuthState.verifying] instead, and `AppState` only becomes
+  /// `authenticated` once the email is confirmed verified (see
+  /// [checkEmailVerifiedNow]).
   Future<void> submitSignUp({
     required String name,
     required String email,
     required String password,
-  }) {
-    return _run(
-      () => ref
-          .read(signUpWithEmailUseCaseProvider)
-          .call(
-            SignUpWithEmailParams(
-              name: name,
-              email: email,
-              password: password,
-            ),
-          ),
+  }) async {
+    state = const AuthState.loading();
+    final result = await ref
+        .read(signUpWithEmailUseCaseProvider)
+        .call(SignUpWithEmailParams(name: name, email: email, password: password));
+    state = result.fold(
+      _mapFailure,
+      (user) => AuthState.verifying(email: user.email),
     );
+  }
+
+  /// Called from `EmailVerificationScreen`'s "email verified" button:
+  /// checks the real Firebase Auth state once. If verified, advances
+  /// `AppState` to `authenticated` and returns to [AuthState.normal];
+  /// otherwise surfaces [AuthErrorKind.emailNotVerified] for the screen's
+  /// error banner.
+  Future<void> checkEmailVerifiedNow() async {
+    state = const AuthState.loading();
+    final result = await ref
+        .read(checkEmailVerifiedUseCaseProvider)
+        .call(const NoParams());
+    state = result.fold(_mapFailure, (isVerified) {
+      if (!isVerified) {
+        return const AuthState.error(kind: AuthErrorKind.emailNotVerified);
+      }
+      ref.read(appStateProvider.notifier).update(const AppState.authenticated());
+      return const AuthState.normal();
+    });
+  }
+
+  /// Called from `EmailVerificationScreen`'s "resend email" button.
+  Future<void> resendVerificationEmail() async {
+    state = const AuthState.loading();
+    final result = await ref
+        .read(resendEmailVerificationUseCaseProvider)
+        .call(const NoParams());
+    state = result.fold(_mapFailure, (_) => const AuthState.normal());
+  }
+
+  /// Called from `EmailVerificationScreen`'s "back to register" button.
+  /// Without this, backing out of that screen would leave the just-created
+  /// account sitting unverified in Firebase Auth forever — unreachable
+  /// (the user walked away from it) and unrecoverable (nothing ever
+  /// deletes it), which defeats the point of requiring verification at
+  /// all. A failure surfaces as a general error for the screen's banner;
+  /// success returns to normal so the screen can pop.
+  Future<void> deleteUser() async {
+    state = const AuthState.loading();
+    final result = await ref.read(deleteUserUseCaseProvider).call(const NoParams());
+    state = result.fold(_mapFailure, (_) => const AuthState.normal());
   }
 
   Future<void> submitGoogle() {

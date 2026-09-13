@@ -8,39 +8,36 @@ part of 'state_providers.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Starts unauthenticated; the `auth` feature updates this once login,
-/// onboarding, or an error is resolved.
+/// Starts unauthenticated; the `auth` feature (`AuthWrapper`, at boot;
+/// `AuthNotifier`, on sign-in/up/out) updates this once a session
+/// resolves, onboarding finishes, or an error occurs.
 ///
-/// `keepAlive`: this is app-lifetime global state. It must never
-/// auto-dispose — the session bootstrap in `main()` sets it during an
-/// awaited step, before the widget tree exists to hold a listener, and
-/// an auto-disposing provider would garbage-collect that value before
-/// the first frame reads it (the app would then always open on login
-/// despite a restored session).
+/// `keepAlive`: this is app-lifetime global state, read and updated from
+/// across the whole app for as long as it runs — auto-disposing it the
+/// moment nothing happens to be watching it would lose that state
+/// outright.
 
 @ProviderFor(AppStateNotifier)
 final appStateProvider = AppStateNotifierProvider._();
 
-/// Starts unauthenticated; the `auth` feature updates this once login,
-/// onboarding, or an error is resolved.
+/// Starts unauthenticated; the `auth` feature (`AuthWrapper`, at boot;
+/// `AuthNotifier`, on sign-in/up/out) updates this once a session
+/// resolves, onboarding finishes, or an error occurs.
 ///
-/// `keepAlive`: this is app-lifetime global state. It must never
-/// auto-dispose — the session bootstrap in `main()` sets it during an
-/// awaited step, before the widget tree exists to hold a listener, and
-/// an auto-disposing provider would garbage-collect that value before
-/// the first frame reads it (the app would then always open on login
-/// despite a restored session).
+/// `keepAlive`: this is app-lifetime global state, read and updated from
+/// across the whole app for as long as it runs — auto-disposing it the
+/// moment nothing happens to be watching it would lose that state
+/// outright.
 final class AppStateNotifierProvider
     extends $NotifierProvider<AppStateNotifier, AppState> {
-  /// Starts unauthenticated; the `auth` feature updates this once login,
-  /// onboarding, or an error is resolved.
+  /// Starts unauthenticated; the `auth` feature (`AuthWrapper`, at boot;
+  /// `AuthNotifier`, on sign-in/up/out) updates this once a session
+  /// resolves, onboarding finishes, or an error occurs.
   ///
-  /// `keepAlive`: this is app-lifetime global state. It must never
-  /// auto-dispose — the session bootstrap in `main()` sets it during an
-  /// awaited step, before the widget tree exists to hold a listener, and
-  /// an auto-disposing provider would garbage-collect that value before
-  /// the first frame reads it (the app would then always open on login
-  /// despite a restored session).
+  /// `keepAlive`: this is app-lifetime global state, read and updated from
+  /// across the whole app for as long as it runs — auto-disposing it the
+  /// moment nothing happens to be watching it would lose that state
+  /// outright.
   AppStateNotifierProvider._()
     : super(
         from: null,
@@ -70,15 +67,14 @@ final class AppStateNotifierProvider
 
 String _$appStateNotifierHash() => r'3171865ceb18c5172191109a188e209165917ad0';
 
-/// Starts unauthenticated; the `auth` feature updates this once login,
-/// onboarding, or an error is resolved.
+/// Starts unauthenticated; the `auth` feature (`AuthWrapper`, at boot;
+/// `AuthNotifier`, on sign-in/up/out) updates this once a session
+/// resolves, onboarding finishes, or an error occurs.
 ///
-/// `keepAlive`: this is app-lifetime global state. It must never
-/// auto-dispose — the session bootstrap in `main()` sets it during an
-/// awaited step, before the widget tree exists to hold a listener, and
-/// an auto-disposing provider would garbage-collect that value before
-/// the first frame reads it (the app would then always open on login
-/// despite a restored session).
+/// `keepAlive`: this is app-lifetime global state, read and updated from
+/// across the whole app for as long as it runs — auto-disposing it the
+/// moment nothing happens to be watching it would lose that state
+/// outright.
 
 abstract class _$AppStateNotifier extends $Notifier<AppState> {
   AppState build();

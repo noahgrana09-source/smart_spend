@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/auth_wrapper.dart';
 import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
 import '../../features/portfolio/presentation/screens/home.dart';
 import '../state/app_states.dart';
@@ -21,17 +21,18 @@ part 'app_router.g.dart';
 /// (`ref.read`, not `ref.watch` — this provider is built once and
 /// doesn't need to rebuild when the state changes later, that's what
 /// [AppStateListener] is for) rather than assuming
-/// [AppState.unauthenticated]. `main()` awaits its session-bootstrap
-/// step before `runApp()`, so by the time this router is first built, a
-/// restored session has already moved `appStateProvider` to
-/// [AppState.authenticated] — hardcoding `unauthenticated` here would
-/// always open on `/login` regardless.
+/// [AppState.unauthenticated]. Nothing sets `appStateProvider` before
+/// this router is first built anymore (`main()` is deliberately a
+/// master key with no session logic — see its doc comment), so today
+/// this always resolves to `/login`; the `ref.read` stays as the
+/// correct general contract for whichever feature wrapper sets
+/// `appStateProvider` next, at whatever point that happens to be.
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) {
   return GoRouter(
     initialLocation: _pathFor(ref.read(appStateProvider)),
     routes: [
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/login', builder: (context, state) => const AuthWrapper()),
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
@@ -62,12 +63,12 @@ String _pathFor(AppState state) => switch (state) {
 /// just never navigates).
 ///
 /// Only reacts to *future* changes of [appStateProvider], not the value
-/// already in place when this starts listening — that's exactly what let
-/// a session restored before `runApp()` fall through silently (see
-/// `appRouterProvider`'s doc comment). `WidgetRef.listen` has no
+/// already in place when this starts listening — a state change that
+/// happened before the widget tree exists would fall through silently
+/// (see `appRouterProvider`'s doc comment on `initialLocation`, which is
+/// what covers that case instead). `WidgetRef.listen` has no
 /// `fireImmediately` option to paper over that here (only
-/// `listenManual`, which isn't safe to call from `build`), so the fix
-/// for that case lives in `initialLocation` instead.
+/// `listenManual`, which isn't safe to call from `build`).
 class AppStateListener extends ConsumerWidget {
   const AppStateListener({required this.child, super.key});
 

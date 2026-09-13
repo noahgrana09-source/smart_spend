@@ -56,12 +56,13 @@ extension AuthStatePatterns on AuthState {
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AuthNormal value)?  normal,TResult Function( AuthLoading value)?  loading,TResult Function( AuthError value)?  error,required TResult orElse(),}){
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>({TResult Function( AuthNormal value)?  normal,TResult Function( AuthLoading value)?  loading,TResult Function( AuthVerifying value)?  verifying,TResult Function( AuthError value)?  error,required TResult orElse(),}){
 final _that = this;
 switch (_that) {
 case AuthNormal() when normal != null:
 return normal(_that);case AuthLoading() when loading != null:
-return loading(_that);case AuthError() when error != null:
+return loading(_that);case AuthVerifying() when verifying != null:
+return verifying(_that);case AuthError() when error != null:
 return error(_that);case _:
   return orElse();
 
@@ -80,12 +81,13 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AuthNormal value)  normal,required TResult Function( AuthLoading value)  loading,required TResult Function( AuthError value)  error,}){
+@optionalTypeArgs TResult map<TResult extends Object?>({required TResult Function( AuthNormal value)  normal,required TResult Function( AuthLoading value)  loading,required TResult Function( AuthVerifying value)  verifying,required TResult Function( AuthError value)  error,}){
 final _that = this;
 switch (_that) {
 case AuthNormal():
 return normal(_that);case AuthLoading():
-return loading(_that);case AuthError():
+return loading(_that);case AuthVerifying():
+return verifying(_that);case AuthError():
 return error(_that);}
 }
 /// A variant of `map` that fallback to returning `null`.
@@ -100,12 +102,13 @@ return error(_that);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AuthNormal value)?  normal,TResult? Function( AuthLoading value)?  loading,TResult? Function( AuthError value)?  error,}){
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>({TResult? Function( AuthNormal value)?  normal,TResult? Function( AuthLoading value)?  loading,TResult? Function( AuthVerifying value)?  verifying,TResult? Function( AuthError value)?  error,}){
 final _that = this;
 switch (_that) {
 case AuthNormal() when normal != null:
 return normal(_that);case AuthLoading() when loading != null:
-return loading(_that);case AuthError() when error != null:
+return loading(_that);case AuthVerifying() when verifying != null:
+return verifying(_that);case AuthError() when error != null:
 return error(_that);case _:
   return null;
 
@@ -123,11 +126,12 @@ return error(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  normal,TResult Function()?  loading,TResult Function( AuthErrorKind kind,  String? message)?  error,required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>({TResult Function()?  normal,TResult Function()?  loading,TResult Function( String email)?  verifying,TResult Function( AuthErrorKind kind,  String? message)?  error,required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case AuthNormal() when normal != null:
 return normal();case AuthLoading() when loading != null:
-return loading();case AuthError() when error != null:
+return loading();case AuthVerifying() when verifying != null:
+return verifying(_that.email);case AuthError() when error != null:
 return error(_that.kind,_that.message);case _:
   return orElse();
 
@@ -146,11 +150,12 @@ return error(_that.kind,_that.message);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  normal,required TResult Function()  loading,required TResult Function( AuthErrorKind kind,  String? message)  error,}) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>({required TResult Function()  normal,required TResult Function()  loading,required TResult Function( String email)  verifying,required TResult Function( AuthErrorKind kind,  String? message)  error,}) {final _that = this;
 switch (_that) {
 case AuthNormal():
 return normal();case AuthLoading():
-return loading();case AuthError():
+return loading();case AuthVerifying():
+return verifying(_that.email);case AuthError():
 return error(_that.kind,_that.message);}
 }
 /// A variant of `when` that fallback to returning `null`
@@ -165,11 +170,12 @@ return error(_that.kind,_that.message);}
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  normal,TResult? Function()?  loading,TResult? Function( AuthErrorKind kind,  String? message)?  error,}) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>({TResult? Function()?  normal,TResult? Function()?  loading,TResult? Function( String email)?  verifying,TResult? Function( AuthErrorKind kind,  String? message)?  error,}) {final _that = this;
 switch (_that) {
 case AuthNormal() when normal != null:
 return normal();case AuthLoading() when loading != null:
-return loading();case AuthError() when error != null:
+return loading();case AuthVerifying() when verifying != null:
+return verifying(_that.email);case AuthError() when error != null:
 return error(_that.kind,_that.message);case _:
   return null;
 
@@ -241,6 +247,72 @@ String toString() {
 
 
 
+
+/// @nodoc
+
+
+class AuthVerifying implements AuthState {
+  const AuthVerifying({required this.email});
+  
+
+ final  String email;
+
+/// Create a copy of AuthState
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$AuthVerifyingCopyWith<AuthVerifying> get copyWith => _$AuthVerifyingCopyWithImpl<AuthVerifying>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthVerifying&&(identical(other.email, email) || other.email == email));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,email);
+
+@override
+String toString() {
+  return 'AuthState.verifying(email: $email)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class $AuthVerifyingCopyWith<$Res> implements $AuthStateCopyWith<$Res> {
+  factory $AuthVerifyingCopyWith(AuthVerifying value, $Res Function(AuthVerifying) _then) = _$AuthVerifyingCopyWithImpl;
+@useResult
+$Res call({
+ String email
+});
+
+
+
+
+}
+/// @nodoc
+class _$AuthVerifyingCopyWithImpl<$Res>
+    implements $AuthVerifyingCopyWith<$Res> {
+  _$AuthVerifyingCopyWithImpl(this._self, this._then);
+
+  final AuthVerifying _self;
+  final $Res Function(AuthVerifying) _then;
+
+/// Create a copy of AuthState
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') $Res call({Object? email = null,}) {
+  return _then(AuthVerifying(
+email: null == email ? _self.email : email // ignore: cast_nullable_to_non_nullable
+as String,
+  ));
+}
+
+
+}
 
 /// @nodoc
 

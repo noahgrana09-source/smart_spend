@@ -5,10 +5,12 @@
 
 import {setGlobalOptions} from "firebase-functions";
 import {onCall, onRequest, HttpsError} from "firebase-functions/v2/https";
+import {onSchedule} from "firebase-functions/v2/scheduler";
 import {defineSecret} from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
 import {initializeApp} from "firebase-admin/app";
-import {getFirestore, FieldValue} from "firebase-admin/firestore";
+import {getFirestore, FieldValue, Timestamp} from "firebase-admin/firestore";
+import {getAuth} from "firebase-admin/auth";
 import Stripe from "stripe";
 
 initializeApp();
@@ -135,5 +137,70 @@ export const stripeWebhook = onRequest(
     }
 
     res.status(200).send("ok");
+  }
+);
+
+// Grace period before an unverified account is eligible for cleanup — see
+// `deleteUnverifiedUsers`. Independent of how often the job itself runs
+// (below): a freshly-created account is never at risk, no matter when the
+// schedule happens to fire.
+const UNVERIFIED_ACCOUNT_GRACE_PERIOD_DAYS = 7;
+
+/**
+ * Scheduled cleanup (runs daily). Deletes accounts whose `users/{uid}`
+ * profile still has `isEmailVerified: false` after
+ * `UNVERIFIED_ACCOUNT_GRACE_PERIOD_DAYS` days (see the sign-up +
+ * email-verification flow in the `auth` feature) — both the Firebase Auth
+ * user and its Firestore profile, so the email address is freed up for a
+ * fresh sign-up attempt.
+ *
+ * Requires a composite index on `users` (`isEmailVerified` asc,
+ * `createdAt` asc) — see `firestore.indexes.json`.
+ */
+export const deleteUnverifiedUsers = onSchedule(
+  "every 24 hours",
+  async () => {
+    const cutoff = Timestamp.fromMillis(
+      Date.now() - UNVERIFIED_ACCOUNT_GRACE_PERIOD_DAYS * 24 * 60 * 60 * 1000
+    );
+    const db = getFirestore();
+    const snapshot = await db
+      .collection("users")
+      .where("isEmailVerified", "==", false)
+      .where("createdAt", "<=", cutoff)
+      .get();
+
+    if (snapshot.empty) {
+      logger.info("No unverified accounts past the grace period.");
+      return;
+    }
+
+    const auth = getAuth();
+    let deletedCount = 0;
+
+    for (const userDoc of snapshot.docs) {
+      try {
+        await auth.deleteUser(userDoc.id);
+      } catch (err) {
+        // Already gone from Auth (e.g. deleted by hand) — still clean up
+        // the stale Firestore doc below. Any other error is left for the
+        // next run to retry, so the two never drift out of sync.
+        if ((err as {code?: string}).code !== "auth/user-not-found") {
+          logger.error(`Failed to delete Auth user ${userDoc.id}`, err);
+          continue;
+        }
+      }
+
+      try {
+        await userDoc.ref.delete();
+        deletedCount++;
+      } catch (err) {
+        logger.error(`Failed to delete Firestore profile ${userDoc.id}`, err);
+      }
+    }
+
+    logger.info(
+      `Deleted ${deletedCount}/${snapshot.size} unverified accounts.`
+    );
   }
 );

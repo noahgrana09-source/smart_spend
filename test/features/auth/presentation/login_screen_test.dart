@@ -15,7 +15,7 @@ import 'package:smart_spend/l10n/gen/app_localizations.dart';
 
 import 'auth_presentation_mocks.dart';
 
-/// Like `pumpAndSettle`, but bounded: `AuthScaffold`'s Lottie header
+/// Like `pumpAndSettle`, but bounded: `FormScaffold`'s Lottie header
 /// loops (`repeat: true`), so the tree never truly settles.
 Future<void> _settle(WidgetTester tester) async {
   for (var i = 0; i < 10; i++) {

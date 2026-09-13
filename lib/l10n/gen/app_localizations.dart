@@ -110,6 +110,12 @@ abstract class AppLocalizations {
   /// **'Create account'**
   String get authRegisterTitle;
 
+  /// No description provided for @authEmailVerificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify your email'**
+  String get authEmailVerificationTitle;
+
   /// No description provided for @authEmailLabel.
   ///
   /// In en, this message translates to:
@@ -151,6 +157,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Continue with Google'**
   String get authGoogleButton;
+
+  /// No description provided for @authEmailVerificationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'We sent a verification link to {email}. Check your inbox, and if you don\'t see it, look in your spam folder.'**
+  String authEmailVerificationDescription(String email);
+
+  /// No description provided for @authEmailVerifiedButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Email verified'**
+  String get authEmailVerifiedButton;
+
+  /// No description provided for @authResendEmailButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend email'**
+  String get authResendEmailButton;
+
+  /// No description provided for @authBackToRegisterButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to register'**
+  String get authBackToRegisterButton;
 
   /// No description provided for @authGoToRegisterPrompt.
   ///
@@ -247,6 +277,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Something went wrong. Please try again.'**
   String get authErrorGeneric;
+
+  /// No description provided for @authErrorEmailNotVerified.
+  ///
+  /// In en, this message translates to:
+  /// **'Your email isn\'t verified yet'**
+  String get authErrorEmailNotVerified;
 
   /// No description provided for @authPasswordStrengthWeak.
   ///

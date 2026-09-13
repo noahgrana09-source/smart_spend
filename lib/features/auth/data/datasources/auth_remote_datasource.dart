@@ -65,6 +65,29 @@ abstract class AuthRemoteDataSource {
   /// Signs out the currently authenticated user from all providers.
   Future<void> signOut();
 
+  /// Re-sends the verification email to the currently signed-in user.
+  ///
+  /// Throws [AuthDataSourceException] if there is no signed-in user.
+  Future<void> sendEmailVerification();
+
+  /// Reloads the currently signed-in user and returns whether their email
+  /// is verified now. If it just became verified, best-effort syncs that
+  /// onto the `users/{uid}` Firestore profile too — otherwise it would
+  /// stay stuck at the `false` signup wrote it as, which is what
+  /// `deleteUnverifiedUsers` (the Cloud Function that reaps unverified
+  /// accounts) actually queries against.
+  ///
+  /// Throws [AuthDataSourceException] if there is no signed-in user.
+  Future<bool> reloadAndCheckEmailVerified();
+
+  /// Deletes the currently signed-in user from Firebase Auth.
+  ///
+  /// Unlike the best-effort rollback used internally during sign-up,
+  /// this propagates any failure — it's a deliberate, user-facing
+  /// deletion, not secondary cleanup. Throws [AuthDataSourceException] if
+  /// there is no signed-in user.
+  Future<void> deleteCurrentUser();
+
   /// Returns the currently authenticated user, or `null` if not signed in.
   ///
   /// Reads [FirebaseAuth.currentUser] synchronously, which can spuriously
@@ -78,15 +101,13 @@ abstract class AuthRemoteDataSource {
   /// Resolves once Firebase Auth has restored (or confirmed the absence
   /// of) a persisted session, via the first event of [FirebaseAuth
   /// .authStateChanges]. Unlike [getCurrentUser], this cannot race ahead
-  /// of Firebase's own session restoration — it's what [AuthNotifier
-  /// .restoreSession] uses at app boot.
+  /// of Firebase's own session restoration — it's what `AuthWrapper`
+  /// uses at app boot (via [ResolveCurrentUserUseCase]). Also reloads
+  /// (and best-effort syncs Firestore, like [reloadAndCheckEmailVerified])
+  /// when the cached `emailVerified` still reads `false` — otherwise a
+  /// session that got verified while the app was closed would report
+  /// stale.
   Future<UserModel?> resolveCurrentUser();
-
-  /// Reads the `users/{uid}` document directly from Firestore, or `null`
-  /// if it doesn't exist. Used by [AuthRepositoryImpl] to backfill the
-  /// local Drift cache when it's empty but a Firebase Auth session is
-  /// still alive (fresh install, cleared local database, etc.).
-  Future<UserModel?> fetchUserProfile(String uid);
 }
 
 /// Implementation of [AuthRemoteDataSource] using Firebase Auth and Google Sign-In.
@@ -170,7 +191,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // existing user must never be deleted over a transient failure
       // reading/writing its profile.
       if (userCredential.additionalUserInfo?.isNewUser ?? false) {
-        await _deleteUser(user);
+        try {
+          await _deleteUser(user);
+        } catch (_) {
+          // Ignored: nothing more we can do here — the persistence
+          // error below is what gets surfaced regardless.
+        }
       }
       rethrow;
     }
@@ -215,6 +241,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
 
     await user.updateDisplayName(name);
+    // Picks up the just-set displayName (unrelated to email verification —
+    // that's a separate reload in `reloadAndCheckEmailVerified`).
     await user.reload();
 
     final User? updatedUser = _firebaseAuth.currentUser;
@@ -233,9 +261,23 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       // always safe to roll it back: undo the sign-up rather than
       // leaving an orphaned Firebase Auth account with no profile,
       // which would block retrying with the same email.
-      await _deleteUser(updatedUser);
+      try {
+        await _deleteUser(updatedUser);
+      } catch (_) {
+        // Ignored: nothing more we can do here — the persistence error
+        // below is what gets surfaced regardless.
+      }
       rethrow;
     }
+
+    // Best-effort: a failed send shouldn't fail the whole sign-up, since
+    // the verification screen offers a "resend" action for retrying.
+    try {
+      await updatedUser.sendEmailVerification();
+    } catch (_) {
+      // Ignored — the user can resend from the verification screen.
+    }
+
     return userModel;
   }
 
@@ -264,6 +306,47 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   }
 
   @override
+  Future<void> sendEmailVerification() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const AuthDataSourceException(
+        code: 'no-current-user',
+        message: 'No signed-in user to send a verification email to',
+      );
+    }
+    await user.sendEmailVerification();
+  }
+
+  @override
+  Future<bool> reloadAndCheckEmailVerified() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const AuthDataSourceException(
+        code: 'no-current-user',
+        message: 'No signed-in user to check email verification for',
+      );
+    }
+    await user.reload();
+    final freshUser = _firebaseAuth.currentUser;
+    final isVerified = freshUser?.emailVerified ?? false;
+    if (freshUser != null) await _syncEmailVerifiedToFirestore(freshUser);
+
+    return isVerified;
+  }
+
+  @override
+  Future<void> deleteCurrentUser() async {
+    final User? user = _firebaseAuth.currentUser;
+    if (user == null) {
+      throw const AuthDataSourceException(
+        code: 'no-current-user',
+        message: 'No signed-in user to delete',
+      );
+    }
+    await _deleteUser(user);
+  }
+
+  @override
   UserModel? getCurrentUser() {
     final User? user = _firebaseAuth.currentUser;
     if (user == null) return null;
@@ -274,24 +357,65 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<UserModel?> resolveCurrentUser() async {
     final User? user = await _firebaseAuth.authStateChanges().first;
     if (user == null) return null;
-    return UserModel.fromFirebaseUser(user);
+
+    // The cached `emailVerified` flag can be stale: verifying happens by
+    // opening a link outside the app (email client / browser), so
+    // nothing local ever refreshes it on its own — a session restored
+    // right after that would otherwise still read `false` here. Only
+    // worth reloading when it does: once true, it never goes back to
+    // false, so there's nothing to gain from reloading an
+    // already-verified session on every cold start.
+    if (!user.emailVerified) {
+      try {
+        await user.reload();
+      } catch (_) {
+        // Best-effort (e.g. offline) — fall back to the cached value.
+      }
+    }
+    final freshUser = _firebaseAuth.currentUser ?? user;
+    await _syncEmailVerifiedToFirestore(freshUser);
+    return UserModel.fromFirebaseUser(freshUser);
   }
 
-  @override
-  Future<UserModel?> fetchUserProfile(String uid) async {
-    final doc = await _firestore.collection('users').doc(uid).get();
-    if (!doc.exists) return null;
-    return UserModel.fromFirestore(doc);
-  }
-
-  /// Best-effort rollback: deletes [user] if the account was left
-  /// without a persisted profile. Swallows any secondary failure so
-  /// the original persistence error is what gets surfaced regardless.
-  Future<void> _deleteUser(User user) async {
+  /// Best-effort: syncs a freshly-reloaded [user]'s `emailVerified` onto
+  /// their `users/{uid}` Firestore profile, which otherwise only ever
+  /// reflects whatever `signUpWithEmailAndPassword` wrote at sign-up time
+  /// (`false`) — verifying happens outside the app, so nothing else ever
+  /// updates it. Shared by [resolveCurrentUser] (checked at boot) and
+  /// [reloadAndCheckEmailVerified] (checked from the "email verified"
+  /// button); both call this only after their own reload, so [user]'s
+  /// flag is current. A failure here never fails the caller — it only
+  /// matters for keeping `deleteUnverifiedUsers` (which queries
+  /// Firestore, not Auth) from reaping an account that actually got
+  /// verified while nothing was around to record it.
+  Future<void> _syncEmailVerifiedToFirestore(User user) async {
+    if (!user.emailVerified) return;
     try {
-      await user.delete();
+      await _firestore.collection('users').doc(user.uid).update({
+        'isEmailVerified': true,
+      });
     } catch (_) {
-      // Ignored: nothing more we can do here.
+      // Ignored — see doc comment above.
+    }
+  }
+
+  /// Deletes [user] from Firebase Auth, and best-effort deletes their
+  /// `users/{uid}` Firestore profile alongside it — once Auth is gone
+  /// (the part that actually frees up the email address), a stray
+  /// leftover profile doc isn't worth blocking on or reporting as a
+  /// failure.
+  ///
+  /// Deleting [user] itself still propagates — callers that use this for
+  /// best-effort rollback (an account left without a persisted profile)
+  /// catch around their own call instead, so the original persistence
+  /// error is what gets surfaced regardless; [deleteCurrentUser] lets it
+  /// propagate on purpose.
+  Future<void> _deleteUser(User user) async {
+    await user.delete();
+    try {
+      await _firestore.collection('users').doc(user.uid).delete();
+    } catch (_) {
+      // Best-effort — see the doc comment above.
     }
   }
 

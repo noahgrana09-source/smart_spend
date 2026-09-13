@@ -41,10 +41,6 @@ void main() {
     // caching behavior itself is what's under test.
     when(() => mockLocalDataSource.saveUser(any())).thenAnswer((_) async {});
     when(() => mockLocalDataSource.clear()).thenAnswer((_) async {});
-    when(() => mockLocalDataSource.getCurrentUser()).thenAnswer((_) async => null);
-    when(
-      () => mockLocalDataSource.watchCurrentUser(),
-    ).thenAnswer((_) => const Stream.empty());
   });
 
   final tUserModel = UserModel(
@@ -477,6 +473,146 @@ void main() {
     });
   });
 
+  group('resendEmailVerification', () {
+    test('should return Right(unit) when the data source succeeds', () async {
+      when(
+        () => mockDataSource.sendEmailVerification(),
+      ).thenAnswer((_) async {});
+
+      final result = await repository.resendEmailVerification();
+
+      expect(result, const Right(unit));
+      verify(() => mockDataSource.sendEmailVerification()).called(1);
+    });
+
+    test('should return ServerFailure on generic Exception', () async {
+      when(
+        () => mockDataSource.sendEmailVerification(),
+      ).thenThrow(Exception('boom'));
+
+      final result = await repository.resendEmailVerification();
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect(failure.code, 'unknown-error');
+      }, (_) => fail('Should be Left'));
+    });
+
+    test(
+      'should return ServerFailure with the datasource code on AuthDataSourceException',
+      () async {
+        when(() => mockDataSource.sendEmailVerification()).thenThrow(
+          const AuthDataSourceException(
+            code: 'no-current-user',
+            message: 'No signed-in user',
+          ),
+        );
+
+        final result = await repository.resendEmailVerification();
+
+        expect(result.isLeft(), true);
+        result.fold((failure) {
+          expect(failure, isA<ServerFailure>());
+          expect(failure.code, 'no-current-user');
+        }, (_) => fail('Should be Left'));
+      },
+    );
+  });
+
+  group('checkEmailVerified', () {
+    test('should return Right(true) when the email is verified', () async {
+      when(
+        () => mockDataSource.reloadAndCheckEmailVerified(),
+      ).thenAnswer((_) async => true);
+
+      final result = await repository.checkEmailVerified();
+
+      expect(result, const Right(true));
+    });
+
+    test(
+      'should return Right(false) when the email is not verified yet',
+      () async {
+        when(
+          () => mockDataSource.reloadAndCheckEmailVerified(),
+        ).thenAnswer((_) async => false);
+
+        final result = await repository.checkEmailVerified();
+
+        expect(result, const Right(false));
+      },
+    );
+
+    test('should return ServerFailure on generic Exception', () async {
+      when(
+        () => mockDataSource.reloadAndCheckEmailVerified(),
+      ).thenThrow(Exception('boom'));
+
+      final result = await repository.checkEmailVerified();
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect(failure.code, 'unknown-error');
+      }, (_) => fail('Should be Left'));
+    });
+  });
+
+  group('deleteUser', () {
+    test('should return Right(unit) when the data source succeeds', () async {
+      when(() => mockDataSource.deleteCurrentUser()).thenAnswer((_) async {});
+
+      final result = await repository.deleteUser();
+
+      expect(result, const Right(unit));
+      verify(() => mockDataSource.deleteCurrentUser()).called(1);
+    });
+
+    test('should return ServerFailure on generic Exception', () async {
+      when(
+        () => mockDataSource.deleteCurrentUser(),
+      ).thenThrow(Exception('boom'));
+
+      final result = await repository.deleteUser();
+
+      expect(result.isLeft(), true);
+      result.fold((failure) {
+        expect(failure, isA<ServerFailure>());
+        expect(failure.code, 'unknown-error');
+      }, (_) => fail('Should be Left'));
+    });
+
+    test(
+      'should return ServerFailure with the datasource code on AuthDataSourceException',
+      () async {
+        when(() => mockDataSource.deleteCurrentUser()).thenThrow(
+          const AuthDataSourceException(
+            code: 'no-current-user',
+            message: 'No signed-in user',
+          ),
+        );
+
+        final result = await repository.deleteUser();
+
+        expect(result.isLeft(), true);
+        result.fold((failure) {
+          expect(failure, isA<ServerFailure>());
+          expect(failure.code, 'no-current-user');
+        }, (_) => fail('Should be Left'));
+      },
+    );
+
+    test('clears the local cache after a successful delete', () async {
+      when(() => mockDataSource.deleteCurrentUser()).thenAnswer((_) async {});
+
+      await repository.deleteUser();
+      await untilCalled(() => mockLocalDataSource.clear());
+
+      verify(() => mockLocalDataSource.clear()).called(1);
+    });
+  });
+
   group('getCurrentUser', () {
     test('should return UserEntity when user is authenticated', () {
       when(() => mockDataSource.getCurrentUser()).thenReturn(tUserModel);
@@ -594,74 +730,6 @@ void main() {
       await untilCalled(() => mockLocalDataSource.clear());
 
       verify(() => mockLocalDataSource.clear()).called(1);
-    });
-  });
-
-  group('watchCurrentUser', () {
-    test('maps the local cache stream to UserEntity', () {
-      when(
-        () => mockLocalDataSource.watchCurrentUser(),
-      ).thenAnswer((_) => Stream.value(tUserModel));
-
-      final stream = repository.watchCurrentUser();
-
-      expect(stream, emits(tUserEntity));
-    });
-
-    test('emits null when the local cache is empty', () {
-      when(
-        () => mockLocalDataSource.watchCurrentUser(),
-      ).thenAnswer((_) => Stream.value(null));
-
-      final stream = repository.watchCurrentUser();
-
-      expect(stream, emits(isNull));
-    });
-
-    group('backfill', () {
-      test(
-        'fetches from Firestore and caches it when the local cache is '
-        'empty but a Firebase session exists',
-        () async {
-          when(
-            () => mockLocalDataSource.getCurrentUser(),
-          ).thenAnswer((_) async => null);
-          when(() => mockDataSource.getCurrentUser()).thenReturn(tUserModel);
-          when(
-            () => mockDataSource.fetchUserProfile('123'),
-          ).thenAnswer((_) async => tUserModel);
-
-          repository.watchCurrentUser();
-          await untilCalled(() => mockLocalDataSource.saveUser(any()));
-
-          verify(() => mockDataSource.fetchUserProfile('123')).called(1);
-          verify(() => mockLocalDataSource.saveUser(tUserModel)).called(1);
-        },
-      );
-
-      test('does nothing when the local cache already has a user', () async {
-        when(
-          () => mockLocalDataSource.getCurrentUser(),
-        ).thenAnswer((_) async => tUserModel);
-
-        repository.watchCurrentUser();
-        // Let the fire-and-forget backfill run its course.
-        await Future<void>.delayed(Duration.zero);
-
-        verifyNever(() => mockDataSource.fetchUserProfile(any()));
-      });
-
-      test('does nothing when there is no Firebase session either', () async {
-        when(
-          () => mockLocalDataSource.getCurrentUser(),
-        ).thenAnswer((_) async => null);
-        when(() => mockDataSource.getCurrentUser()).thenReturn(null);
-
-        repository.watchCurrentUser();
-        await Future<void>.delayed(Duration.zero);
-
-        verifyNever(() => mockDataSource.fetchUserProfile(any()));
-      });
     });
   });
 }

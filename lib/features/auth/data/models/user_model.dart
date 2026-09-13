@@ -52,25 +52,6 @@ abstract class UserModel with _$UserModel {
     );
   }
 
-  /// Creates a [UserModel] from Firestore document data.
-  ///
-  /// [uid] is the document ID; [data] is the document body.
-  factory UserModel.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return UserModel(
-      uid: doc.id,
-      email:
-          data['email'] as String? ??
-          (throw FormatException('Email not found')),
-      displayName: data['displayName'] as String?,
-      photoUrl: data['photoUrl'] as String?,
-      isEmailVerified: data['isEmailVerified'] as bool? ?? false,
-      createdAt:
-          (data['createdAt'] as Timestamp?)?.toDate() ??
-          (throw FormatException('CreatedAt not found')),
-    );
-  }
-
   /// Creates a [UserModel] from a JSON map.
   factory UserModel.fromJson(Map<String, dynamic> json) =>
       _$UserModelFromJson(json);
@@ -86,18 +67,6 @@ abstract class UserModel with _$UserModel {
       'isEmailVerified': isEmailVerified,
       'createdAt': Timestamp.fromDate(createdAt),
     };
-  }
-
-  /// Creates a [UserModel] from a cached Drift [UserProfile] row.
-  factory UserModel.fromDrift(UserProfile row) {
-    return UserModel(
-      uid: row.uid,
-      email: row.email,
-      displayName: row.displayName,
-      photoUrl: row.photoUrl,
-      isEmailVerified: row.isEmailVerified,
-      createdAt: row.createdAt,
-    );
   }
 
   /// Converts this [UserModel] to a [UserProfilesCompanion] for
