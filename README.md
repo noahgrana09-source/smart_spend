@@ -52,8 +52,7 @@ Email/password and Google sign-in, sign-up, sign-out.
 
 **Distribution**
 - `domain/` — `AuthRepository` + use cases (`signInWithEmail`,
-  `signInWithGoogle`, `signUpWithEmail`, `signOut`, `getCurrentUser`,
-  `watchCurrentUser`).
+  `signInWithGoogle`, `signUpWithEmail`, `signOut`, `getCurrentUser`).
 - `data/` — `AuthRemoteDataSource` (Firebase Auth + Firestore, typed
   exceptions, rolls back a just-created account if the profile write
   fails), `AuthLocalDataSource` (Drift profile cache, best-effort, errors

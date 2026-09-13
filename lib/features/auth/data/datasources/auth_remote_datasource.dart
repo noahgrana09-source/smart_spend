@@ -71,7 +71,11 @@ abstract class AuthRemoteDataSource {
   Future<void> sendEmailVerification();
 
   /// Reloads the currently signed-in user and returns whether their email
-  /// is verified now.
+  /// is verified now. If it just became verified, best-effort syncs that
+  /// onto the `users/{uid}` Firestore profile too — otherwise it would
+  /// stay stuck at the `false` signup wrote it as, which is what
+  /// `deleteUnverifiedUsers` (the Cloud Function that reaps unverified
+  /// accounts) actually queries against.
   ///
   /// Throws [AuthDataSourceException] if there is no signed-in user.
   Future<bool> reloadAndCheckEmailVerified();
@@ -97,15 +101,13 @@ abstract class AuthRemoteDataSource {
   /// Resolves once Firebase Auth has restored (or confirmed the absence
   /// of) a persisted session, via the first event of [FirebaseAuth
   /// .authStateChanges]. Unlike [getCurrentUser], this cannot race ahead
-  /// of Firebase's own session restoration — it's what [AuthNotifier
-  /// .restoreSession] uses at app boot.
+  /// of Firebase's own session restoration — it's what `AuthWrapper`
+  /// uses at app boot (via [ResolveCurrentUserUseCase]). Also reloads
+  /// (and best-effort syncs Firestore, like [reloadAndCheckEmailVerified])
+  /// when the cached `emailVerified` still reads `false` — otherwise a
+  /// session that got verified while the app was closed would report
+  /// stale.
   Future<UserModel?> resolveCurrentUser();
-
-  /// Reads the `users/{uid}` document directly from Firestore, or `null`
-  /// if it doesn't exist. Used by [AuthRepositoryImpl] to backfill the
-  /// local Drift cache when it's empty but a Firebase Auth session is
-  /// still alive (fresh install, cleared local database, etc.).
-  Future<UserModel?> fetchUserProfile(String uid);
 }
 
 /// Implementation of [AuthRemoteDataSource] using Firebase Auth and Google Sign-In.
@@ -325,7 +327,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
     }
     await user.reload();
-    return _firebaseAuth.currentUser?.emailVerified ?? false;
+    final freshUser = _firebaseAuth.currentUser;
+    final isVerified = freshUser?.emailVerified ?? false;
+    if (freshUser != null) await _syncEmailVerifiedToFirestore(freshUser);
+
+    return isVerified;
   }
 
   @override
@@ -366,14 +372,31 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         // Best-effort (e.g. offline) — fall back to the cached value.
       }
     }
-    return UserModel.fromFirebaseUser(_firebaseAuth.currentUser ?? user);
+    final freshUser = _firebaseAuth.currentUser ?? user;
+    await _syncEmailVerifiedToFirestore(freshUser);
+    return UserModel.fromFirebaseUser(freshUser);
   }
 
-  @override
-  Future<UserModel?> fetchUserProfile(String uid) async {
-    final doc = await _firestore.collection('users').doc(uid).get();
-    if (!doc.exists) return null;
-    return UserModel.fromFirestore(doc);
+  /// Best-effort: syncs a freshly-reloaded [user]'s `emailVerified` onto
+  /// their `users/{uid}` Firestore profile, which otherwise only ever
+  /// reflects whatever `signUpWithEmailAndPassword` wrote at sign-up time
+  /// (`false`) — verifying happens outside the app, so nothing else ever
+  /// updates it. Shared by [resolveCurrentUser] (checked at boot) and
+  /// [reloadAndCheckEmailVerified] (checked from the "email verified"
+  /// button); both call this only after their own reload, so [user]'s
+  /// flag is current. A failure here never fails the caller — it only
+  /// matters for keeping `deleteUnverifiedUsers` (which queries
+  /// Firestore, not Auth) from reaping an account that actually got
+  /// verified while nothing was around to record it.
+  Future<void> _syncEmailVerifiedToFirestore(User user) async {
+    if (!user.emailVerified) return;
+    try {
+      await _firestore.collection('users').doc(user.uid).update({
+        'isEmailVerified': true,
+      });
+    } catch (_) {
+      // Ignored — see doc comment above.
+    }
   }
 
   /// Deletes [user] from Firebase Auth, and best-effort deletes their

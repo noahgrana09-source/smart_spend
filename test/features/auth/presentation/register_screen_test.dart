@@ -32,6 +32,12 @@ void main() {
     signUp = MockSignUpWithEmailUseCase();
   });
 
+  // RegisterScreen now pops itself (rather than pushing
+  // EmailVerificationScreen) once sign-up succeeds — AuthWrapper reacts
+  // to the same state change and shows the right thing underneath. So it
+  // needs something to pop back to: pushed on top of a plain "open"
+  // placeholder, same as `AuthWrapper` -> `LoginScreen` would provide it
+  // for real.
   Future<void> pumpRegister(
     WidgetTester tester, {
     Set<String> common = const {'password123'},
@@ -42,14 +48,27 @@ void main() {
           signUpWithEmailUseCaseProvider.overrideWithValue(signUp),
           commonPasswordsProvider.overrideWith((ref) async => common),
         ],
-        child: const MaterialApp(
-          locale: Locale('en'),
+        child: MaterialApp(
+          locale: const Locale('en'),
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: RegisterScreen(),
+          home: Builder(
+            builder: (context) => Scaffold(
+              body: Center(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(context).push<void>(
+                    MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                  ),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
 
@@ -155,7 +174,8 @@ void main() {
   });
 
   testWidgets(
-    'a successful sign-up pushes the email verification screen',
+    'a successful sign-up pops back (AuthWrapper shows the email '
+    'verification screen underneath, in the real app)',
     (tester) async {
       when(() => signUp.call(any())).thenAnswer((_) async => Right(user));
       await pumpRegister(tester);
@@ -164,11 +184,8 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Create account'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Verify your email'), findsOneWidget);
-      // The screen shows the address off the signed-up UserEntity
-      // (`user.email`, from the mocked use case's Right), not the raw
-      // form input.
-      expect(find.textContaining(user.email), findsOneWidget);
+      expect(find.text('open'), findsOneWidget);
+      expect(find.byType(RegisterScreen), findsNothing);
     },
   );
 }

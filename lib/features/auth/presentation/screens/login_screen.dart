@@ -93,8 +93,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Same leak, the other direction: Register may have left its own
     // error (e.g. a failed sign-up) on the shared AuthState — clear it
     // so it doesn't show up on this screen's banner now that it's
-    // visible again.
-    notifier.reset();
+    // visible again. But NOT if it's `verifying`: this push's Future
+    // also resolves when Register pops itself after a *successful*
+    // sign-up (see `RegisterScreen`'s listener) — AuthWrapper needs that
+    // state intact to react to it and show EmailVerificationScreen;
+    // clearing it here would silently strand the user back on Login.
+    if (ref.read(authProvider) is! AuthVerifying) {
+      notifier.reset();
+    }
   }
 
   @override
@@ -134,7 +140,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 label: l10n.authEmailLabel,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.email],
+                // `username` pairs this with the `password` field below
+                // as a credential the platform can offer to save — same
+                // reasoning as `newUsername` on the register screen.
+                autofillHints: const [
+                  AutofillHints.username,
+                  AutofillHints.email,
+                ],
                 onChanged: clearCredentialError,
                 validator: (value) {
                   final error = AuthValidators.email(value);

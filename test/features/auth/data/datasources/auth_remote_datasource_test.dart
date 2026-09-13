@@ -369,28 +369,55 @@ void main() {
   });
 
   group('reloadAndCheckEmailVerified', () {
-    test('reloads the user and returns the fresh emailVerified value',
-        () async {
-      when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
-      when(() => mockUser.reload()).thenAnswer((_) async {});
-      when(() => mockUser.emailVerified).thenReturn(true);
+    test(
+      'reloads the user, returns true, and syncs isEmailVerified onto '
+      'the Firestore profile',
+      () async {
+        when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+        when(() => mockUser.reload()).thenAnswer((_) async {});
+        when(() => mockUser.emailVerified).thenReturn(true);
+        when(() => mockDocRef.update(any())).thenAnswer((_) async {});
 
-      final result = await dataSource.reloadAndCheckEmailVerified();
+        final result = await dataSource.reloadAndCheckEmailVerified();
 
-      expect(result, true);
-      verify(() => mockUser.reload()).called(1);
-    });
+        expect(result, true);
+        verify(() => mockUser.reload()).called(1);
+        verify(
+          () => mockDocRef.update({'isEmailVerified': true}),
+        ).called(1);
+      },
+    );
 
-    test('returns false when the reloaded user is still not verified',
-        () async {
-      when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
-      when(() => mockUser.reload()).thenAnswer((_) async {});
-      when(() => mockUser.emailVerified).thenReturn(false);
+    test(
+      'still returns true when syncing to Firestore fails (best-effort)',
+      () async {
+        when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+        when(() => mockUser.reload()).thenAnswer((_) async {});
+        when(() => mockUser.emailVerified).thenReturn(true);
+        when(() => mockDocRef.update(any())).thenThrow(
+          FirebaseException(plugin: 'cloud_firestore', code: 'unavailable'),
+        );
 
-      final result = await dataSource.reloadAndCheckEmailVerified();
+        final result = await dataSource.reloadAndCheckEmailVerified();
 
-      expect(result, false);
-    });
+        expect(result, true);
+      },
+    );
+
+    test(
+      "returns false when the reloaded user is still not verified, and "
+      "doesn't touch Firestore",
+      () async {
+        when(() => mockFirebaseAuth.currentUser).thenReturn(mockUser);
+        when(() => mockUser.reload()).thenAnswer((_) async {});
+        when(() => mockUser.emailVerified).thenReturn(false);
+
+        final result = await dataSource.reloadAndCheckEmailVerified();
+
+        expect(result, false);
+        verifyNever(() => mockDocRef.update(any()));
+      },
+    );
 
     test(
       'throws AuthDataSourceException with a no-current-user code when there is no signed-in user',
@@ -505,18 +532,21 @@ void main() {
     );
 
     test(
-      'an already-verified session is returned without reloading',
+      'an already-verified session is returned without reloading, and '
+      'syncs isEmailVerified onto Firestore',
       () async {
         when(() => mockUser.emailVerified).thenReturn(true);
         when(
           () => mockFirebaseAuth.authStateChanges(),
         ).thenAnswer((_) => Stream.value(mockUser));
+        when(() => mockDocRef.update(any())).thenAnswer((_) async {});
 
         final result = await dataSource.resolveCurrentUser();
 
         expect(result?.uid, 'uid-123');
         expect(result?.isEmailVerified, true);
         verifyNever(() => mockUser.reload());
+        verify(() => mockDocRef.update({'isEmailVerified': true})).called(1);
       },
     );
 
@@ -541,11 +571,13 @@ void main() {
         when(() => reloadedUser.emailVerified).thenReturn(true);
         when(() => reloadedUser.metadata).thenReturn(mockMetadata);
         when(() => mockFirebaseAuth.currentUser).thenReturn(reloadedUser);
+        when(() => mockDocRef.update(any())).thenAnswer((_) async {});
 
         final result = await dataSource.resolveCurrentUser();
 
         verify(() => mockUser.reload()).called(1);
         expect(result?.isEmailVerified, true);
+        verify(() => mockDocRef.update({'isEmailVerified': true})).called(1);
       },
     );
 
@@ -564,38 +596,9 @@ void main() {
 
         expect(result?.uid, 'uid-123');
         expect(result?.isEmailVerified, false);
+        verifyNever(() => mockDocRef.update(any()));
       },
     );
   });
 
-  group('fetchUserProfile', () {
-    test('returns null when the document does not exist', () async {
-      when(() => mockDocRef.get()).thenAnswer((_) async => mockSnapshot);
-      when(() => mockSnapshot.exists).thenReturn(false);
-
-      final result = await dataSource.fetchUserProfile('uid-123');
-
-      expect(result, isNull);
-      verify(() => mockFirestore.collection('users')).called(1);
-      verify(() => mockCollection.doc('uid-123')).called(1);
-    });
-
-    test('returns the UserModel from the document when it exists', () async {
-      when(() => mockDocRef.get()).thenAnswer((_) async => mockSnapshot);
-      when(() => mockSnapshot.exists).thenReturn(true);
-      when(() => mockSnapshot.id).thenReturn('uid-123');
-      when(() => mockSnapshot.data()).thenReturn({
-        'email': 'test@example.com',
-        'displayName': 'Test User',
-        'photoUrl': null,
-        'isEmailVerified': false,
-        'createdAt': Timestamp.fromDate(DateTime(2024, 1, 1)),
-      });
-
-      final result = await dataSource.fetchUserProfile('uid-123');
-
-      expect(result?.uid, 'uid-123');
-      expect(result?.email, 'test@example.com');
-    });
-  });
 }

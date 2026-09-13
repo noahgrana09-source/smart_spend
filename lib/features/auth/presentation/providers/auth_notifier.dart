@@ -42,6 +42,21 @@ class AuthNotifier extends _$AuthNotifier {
   /// doesn't leak onto the other — see `_openRegister`.
   void reset() => state = const AuthState.normal();
 
+  /// Called by `AuthWrapper` when it finds an existing-but-unverified
+  /// session at boot — puts the feature into the same [AuthState.verifying]
+  /// a fresh [submitSignUp] produces, so `AuthWrapper` reacts to either
+  /// origin the same way (swapping to `EmailVerificationScreen`).
+  ///
+  /// Guarded on the current state still being [AuthState.normal]: the
+  /// async gap between `AuthWrapper` starting its resolve and this being
+  /// called is small but non-zero, and this must never clobber something
+  /// the user is actively doing on `LoginScreen` in that window (a
+  /// sign-in in flight, or one that already failed).
+  void resumeVerifying({required String email}) {
+    if (state is! AuthNormal) return;
+    state = AuthState.verifying(email: email);
+  }
+
   Future<void> submitSignIn({
     required String email,
     required String password,

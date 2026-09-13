@@ -10,11 +10,13 @@ import '../providers/auth_notifier.dart';
 import '../providers/auth_state.dart';
 import '../widgets/auth_error_banner.dart';
 import '../widgets/auth_primary_button.dart';
+import 'register_screen.dart';
 
-/// Shown right after a successful sign-up, while the new account's email
-/// is still unverified. `RegisterScreen` pushes this screen — not a route
-/// on the state-driven router, same as `RegisterScreen` itself — when
-/// `authProvider` moves to `AuthState.verifying`.
+/// Shown while the account's email is unverified — either right after a
+/// fresh sign-up, or found already sitting unverified in an existing
+/// session at boot. `AuthWrapper` renders this directly (as `/login`'s
+/// content) whenever `authProvider` is `AuthState.verifying`; it isn't a
+/// route on the state-driven router.
 ///
 /// The global `AppState` stays `unauthenticated` until the user confirms
 /// verification here; see `AuthNotifier.checkEmailVerifiedNow`.
@@ -24,20 +26,32 @@ class EmailVerificationScreen extends ConsumerWidget {
   /// The address the verification link was sent to. Passed in directly
   /// (rather than read off `AuthState`) so this screen's content doesn't
   /// depend on the notifier's transient `verifying` state, which only
-  /// exists to trigger the initial navigation here.
+  /// exists to tell `AuthWrapper` to render this screen in the first
+  /// place.
   final String email;
 
   /// Backing out here abandons the account this screen was created for —
   /// so it deletes it rather than leaving an orphaned, unverified Firebase
-  /// Auth user nobody can ever reach again (see
-  /// `AuthNotifier.deleteUser`). Only pops on success; a failure stays on
-  /// this screen with the error banner so the user can retry instead of
-  /// silently losing track of the account.
+  /// Auth user nobody can ever reach again (see `AuthNotifier.deleteUser`).
+  ///
+  /// On success, pushes a fresh `RegisterScreen` rather than popping:
+  /// this screen isn't necessarily pushed on top of one — at boot,
+  /// `AuthWrapper` renders it directly with nothing underneath to reveal.
+  /// `AuthWrapper`'s own listener reacts to the same `AuthState.normal`
+  /// this produces and swaps back to `LoginScreen` underneath, so the
+  /// stack ends up `AuthWrapper(LoginScreen) -> RegisterScreen`, same as
+  /// tapping "sign up" from `LoginScreen` normally would. A failure stays
+  /// on this screen with the error banner so the user can retry instead
+  /// of silently losing track of the account.
   Future<void> _goBackToRegister(BuildContext context, WidgetRef ref) async {
     await ref.read(authProvider.notifier).deleteUser();
     if (!context.mounted) return;
     if (ref.read(authProvider) is AuthNormal) {
-      Navigator.of(context).pop();
+      Navigator.of(context).push<void>(
+        PlatformUtils.isCupertino
+            ? CupertinoPageRoute(builder: (_) => const RegisterScreen())
+            : MaterialPageRoute(builder: (_) => const RegisterScreen()),
+      );
     }
   }
 

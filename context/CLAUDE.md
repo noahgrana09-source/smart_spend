@@ -202,7 +202,7 @@ USD 9.99.
   sección "Features → auth" del `README.md` de raíz):
   - `domain/`: `UserEntity`, contrato `AuthRepository`, usecases
     `getCurrentUser`, `signInWithEmail`, `signInWithGoogle`, `signOut`,
-    `signUpWithEmail`, `watchCurrentUser`.
+    `signUpWithEmail`.
   - `data/`: `UserModel` (freezed), `AuthRemoteDataSource` (Firebase Auth
     + Firestore, excepciones tipadas + rollback de cuenta), `AuthLocalDataSource`
     (caché Drift best-effort sin tipar) y `AuthRepositoryImpl` (orquesta

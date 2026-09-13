@@ -397,6 +397,41 @@ void main() {
     });
   });
 
+  group('resumeVerifying', () {
+    test('from normal -> feature verifying(email)', () async {
+      final container = makeContainer();
+
+      container.read(authProvider.notifier).resumeVerifying(email: 'a@b.com');
+
+      expect(
+        container.read(authProvider),
+        const AuthState.verifying(email: 'a@b.com'),
+      );
+    });
+
+    test(
+      "doesn't clobber a state other than normal (e.g. a sign-in already "
+      'in flight)',
+      () async {
+        final completer = Completer<Either<Failure, UserEntity>>();
+        when(() => signIn.call(any())).thenAnswer((_) => completer.future);
+        final container = makeContainer();
+        // ignore: unawaited_futures
+        container
+            .read(authProvider.notifier)
+            .submitSignIn(email: 'a@b.com', password: 'pw');
+        expect(container.read(authProvider), const AuthState.loading());
+
+        container
+            .read(authProvider.notifier)
+            .resumeVerifying(email: 'a@b.com');
+
+        expect(container.read(authProvider), const AuthState.loading());
+        completer.complete(Right(user));
+      },
+    );
+  });
+
   test('reset() returns the feature to normal', () async {
     when(() => signIn.call(any())).thenAnswer(
       (_) async => const Left(ServerFailure(code: 'x', message: 'boom')),

@@ -1,9 +1,7 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/utils/platform_utils.dart';
 import '../../../../l10n/gen/app_localizations.dart';
 import '../auth_utils/auth_messages.dart';
 import '../auth_utils/auth_validators.dart';
@@ -18,7 +16,6 @@ import '../widgets/auth_text_field.dart';
 import '../widgets/form_scaffold.dart';
 import '../widgets/google_sign_in_button.dart';
 import '../widgets/password_strength_banner.dart';
-import 'email_verification_screen.dart';
 
 /// Create-account screen. `name` and `confirmPassword` are client-side
 /// only (Firebase needs email + password + displayName). The sign-up
@@ -78,18 +75,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     await ref.read(authProvider.notifier).submitGoogle();
   }
 
-  Future<void> _openEmailVerification(String email) {
-    return Navigator.of(context).push<void>(
-      PlatformUtils.isCupertino
-          ? CupertinoPageRoute(
-              builder: (_) => EmailVerificationScreen(email: email),
-            )
-          : MaterialPageRoute(
-              builder: (_) => EmailVerificationScreen(email: email),
-            ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -98,7 +83,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         // The account was created — tell the platform the name/email/
         // password just entered are good, so it can offer to save them.
         TextInput.finishAutofillContext();
-        _openEmailVerification(next.email);
+        // AuthWrapper (below LoginScreen, below this push) is watching
+        // the same state and has already swapped to
+        // EmailVerificationScreen by now — popping just reveals it.
+        Navigator.of(context).pop();
       }
     });
     final authState = ref.watch(authProvider);
@@ -150,7 +138,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 label: l10n.authEmailLabel,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.email],
+                // `newUsername` (alongside `email`) is what tells the
+                // platform this field pairs with the `newPassword` field
+                // below as a credential worth offering to save — without
+                // it, a manually-typed password has no "this is a new
+                // login" signal (a *suggested* password does, since the
+                // password manager is already tracking that value).
+                autofillHints: const [
+                  AutofillHints.newUsername,
+                  AutofillHints.email,
+                ],
                 onChanged: (_) {
                   if (emailInUseError != null) {
                     ref.read(authProvider.notifier).reset();

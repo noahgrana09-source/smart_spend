@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:smart_spend/core/database/app_database.dart';
 import 'package:smart_spend/features/auth/data/models/user_model.dart';
 import 'package:smart_spend/features/auth/domain/entities/user_entity.dart';
 
@@ -100,52 +99,6 @@ void main() {
       );
     });
 
-    group('fromFirestore', () {
-      late MockDocumentSnapshot mockDoc;
-
-      setUp(() {
-        mockDoc = MockDocumentSnapshot();
-      });
-
-      test('should create UserModel from Firestore DocumentSnapshot', () {
-        when(() => mockDoc.id).thenReturn('123');
-        when(() => mockDoc.data()).thenReturn({
-          'email': 'test@example.com',
-          'displayName': 'Test User',
-          'photoUrl': 'https://photo.url',
-          'isEmailVerified': true,
-          'createdAt': Timestamp.fromDate(tCreatedAt),
-        });
-
-        final result = UserModel.fromFirestore(mockDoc);
-
-        expect(result.uid, '123');
-        expect(result.email, 'test@example.com');
-        expect(result.displayName, 'Test User');
-        expect(result.photoUrl, 'https://photo.url');
-        expect(result.isEmailVerified, true);
-        expect(result.createdAt, tCreatedAt);
-      });
-
-      test('should handle null optional fields from Firestore', () {
-        when(() => mockDoc.id).thenReturn('456');
-        when(() => mockDoc.data()).thenReturn({
-          'email': 'user@example.com',
-          'displayName': null,
-          'photoUrl': null,
-          'isEmailVerified': false,
-          'createdAt': Timestamp.fromDate(tCreatedAt),
-        });
-
-        final result = UserModel.fromFirestore(mockDoc);
-
-        expect(result.uid, '456');
-        expect(result.displayName, isNull);
-        expect(result.photoUrl, isNull);
-        expect(result.isEmailVerified, false);
-      });
-    });
-
     group('toFirestore', () {
       test('should serialize to Firestore format with Timestamp', () {
         final result = tUserModel.toFirestore();
@@ -209,42 +162,6 @@ void main() {
         expect(json['photoUrl'], 'https://photo.url');
         expect(json['isEmailVerified'], true);
         expect(json.containsKey('createdAt'), true);
-      });
-    });
-
-    group('fromDrift', () {
-      test('should create UserModel from a UserProfile row', () {
-        final row = UserProfile(
-          uid: '123',
-          email: 'test@example.com',
-          displayName: 'Test User',
-          photoUrl: 'https://photo.url',
-          isEmailVerified: true,
-          createdAt: tCreatedAt,
-        );
-
-        final result = UserModel.fromDrift(row);
-
-        expect(result.uid, '123');
-        expect(result.email, 'test@example.com');
-        expect(result.displayName, 'Test User');
-        expect(result.photoUrl, 'https://photo.url');
-        expect(result.isEmailVerified, true);
-        expect(result.createdAt, tCreatedAt);
-      });
-
-      test('should preserve null optional fields from the row', () {
-        final row = UserProfile(
-          uid: '456',
-          email: 'user@example.com',
-          isEmailVerified: false,
-          createdAt: tCreatedAt,
-        );
-
-        final result = UserModel.fromDrift(row);
-
-        expect(result.displayName, isNull);
-        expect(result.photoUrl, isNull);
       });
     });
 

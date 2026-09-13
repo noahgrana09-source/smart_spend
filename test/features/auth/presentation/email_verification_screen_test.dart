@@ -8,7 +8,9 @@ import 'package:smart_spend/core/state/app_states.dart';
 import 'package:smart_spend/core/state/state_providers.dart';
 import 'package:smart_spend/core/usecases/usecase.dart';
 import 'package:smart_spend/features/auth/presentation/providers/auth_providers.dart';
+import 'package:smart_spend/features/auth/presentation/providers/common_passwords_provider.dart';
 import 'package:smart_spend/features/auth/presentation/screens/email_verification_screen.dart';
+import 'package:smart_spend/features/auth/presentation/screens/register_screen.dart';
 import 'package:smart_spend/l10n/gen/app_localizations.dart';
 
 import 'auth_presentation_mocks.dart';
@@ -139,6 +141,9 @@ void main() {
           resendVerification,
         ),
         deleteUserUseCaseProvider.overrideWithValue(deleteUser),
+        // A successful "back to register" pushes a fresh RegisterScreen,
+        // which reads this.
+        commonPasswordsProvider.overrideWith((ref) async => const <String>{}),
       ],
     );
     addTearDown(container.dispose);
@@ -174,7 +179,8 @@ void main() {
   }
 
   testWidgets(
-    'tapping "Back to register" deletes the account and pops on success',
+    'tapping "Back to register" deletes the account and pushes a fresh '
+    'RegisterScreen on success',
     (tester) async {
       when(
         () => deleteUser.call(any()),
@@ -185,7 +191,7 @@ void main() {
       await tester.pumpAndSettle();
 
       verify(() => deleteUser.call(any())).called(1);
-      expect(find.text('open'), findsOneWidget);
+      expect(find.byType(RegisterScreen), findsOneWidget);
       expect(find.text('Back to register'), findsNothing);
     },
   );
@@ -203,7 +209,7 @@ void main() {
       await tester.tap(find.text('Back to register'));
       await tester.pumpAndSettle();
 
-      expect(find.text('open'), findsNothing);
+      expect(find.byType(RegisterScreen), findsNothing);
       expect(find.text('Back to register'), findsOneWidget);
       expect(find.text('Try again later'), findsOneWidget);
     },
