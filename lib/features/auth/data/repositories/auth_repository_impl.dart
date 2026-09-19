@@ -1,45 +1,35 @@
-import 'dart:async';
-
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../../core/error/failures.dart';
-import '../datasources/auth_local_datasource.dart';
 import '../datasources/auth_remote_datasource.dart';
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
-import '../models/user_model.dart';
 
 /// Concrete implementation of [AuthRepository].
 ///
-/// Delegates operations to [AuthRemoteDataSource] and maps exceptions
-/// to domain [Failure] types using [Either] from dartz. Every successful
-/// remote result is also cached into [AuthLocalDataSource] (Drift)
-/// best-effort — a cache write failure never turns a successful auth
-/// result into a [Failure]; Firebase Auth/Firestore stay the source of
-/// truth. Nothing reads this cache yet (no feature needs an offline
-/// profile read today); it's written proactively so one can be added
-/// later without touching the sign-in/up paths again.
+/// Delegates operations to [AuthRemoteDataSource] and maps exceptions to
+/// domain [Failure] types using [Either] from dartz. Deliberately has no
+/// local (on-device) persistence of its own: Firebase Auth/Firestore are
+/// the only source of truth for a session, and the profile fields this
+/// feature deals with (email, display name, verification status) are
+/// sensitive enough that caching them in an unencrypted local database
+/// for no reader isn't worth the exposure. See "Dual persistence" in the
+/// root README for the project-wide pattern this deliberately opts out
+/// of, and "Technical decisions" under `auth` for why.
 class AuthRepositoryImpl implements AuthRepository {
   /// The remote data source for authentication operations.
   final AuthRemoteDataSource _remoteDataSource;
 
-  /// The local (Drift) cache of the signed-in user's profile.
-  final AuthLocalDataSource _localDataSource;
-
-  /// Creates an [AuthRepositoryImpl] with the given data sources.
-  AuthRepositoryImpl({
-    required AuthRemoteDataSource remoteDataSource,
-    required AuthLocalDataSource localDataSource,
-  }) : _remoteDataSource = remoteDataSource,
-       _localDataSource = localDataSource;
+  /// Creates an [AuthRepositoryImpl] with the given data source.
+  AuthRepositoryImpl({required AuthRemoteDataSource remoteDataSource})
+    : _remoteDataSource = remoteDataSource;
 
   @override
   Future<Either<Failure, UserEntity>> signInWithGoogle() async {
     try {
       final userModel = await _remoteDataSource.signInWithGoogle();
-      unawaited(_cacheLocally(userModel));
       return Right(userModel.toEntity());
     } catch (e) {
       return Left(_mapGoogleSignInError(e));
@@ -87,7 +77,6 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email,
         password: password,
       );
-      unawaited(_cacheLocally(userModel));
       return Right(userModel.toEntity());
     } on FirebaseAuthException catch (e) {
       return Left(AuthFailure(code: e.code, message: e.message ?? ''));
@@ -114,7 +103,6 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
         name: name,
       );
-      unawaited(_cacheLocally(userModel));
       return Right(userModel.toEntity());
     } on FirebaseAuthException catch (e) {
       return Left(AuthFailure(code: e.code, message: e.message ?? ''));
@@ -135,7 +123,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, Unit>> signOut() async {
     try {
       await _remoteDataSource.signOut();
-      unawaited(_clearLocalCache());
       return const Right(unit);
     } on Exception catch (e) {
       return Left(ServerFailure(code: 'unknown-error', message: e.toString()));
@@ -180,7 +167,6 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Either<Failure, Unit>> deleteUser() async {
     try {
       await _remoteDataSource.deleteCurrentUser();
-      unawaited(_clearLocalCache());
       return const Right(unit);
     } on FirebaseAuthException catch (e) {
       return Left(AuthFailure(code: e.code, message: e.message ?? ''));
@@ -202,23 +188,5 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserEntity?> resolveCurrentUser() async {
     final model = await _remoteDataSource.resolveCurrentUser();
     return model?.toEntity();
-  }
-
-  /// Best-effort local cache write — see the class doc comment.
-  Future<void> _cacheLocally(UserModel userModel) async {
-    try {
-      await _localDataSource.saveUser(userModel);
-    } catch (_) {
-      // Best-effort: nothing currently reads this cache, so a write
-      // failure here has no observable effect either way.
-    }
-  }
-
-  Future<void> _clearLocalCache() async {
-    try {
-      await _localDataSource.clear();
-    } catch (_) {
-      // Best-effort.
-    }
   }
 }

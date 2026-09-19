@@ -65,7 +65,12 @@ total) con investigación de noticias en línea, vía un LLM (Gemini).
 `lib/core/`:
 - `database/`: conexión única Drift/SQLite (`AppDatabase`), con `tables/` y
   `daos/` adentro; `sync_repository.dart` define el contrato offline-first
-  (Drift SSOT + push best-effort a Firestore) que cada feature implementa.
+  (Drift SSOT + push best-effort a Firestore) — todavía **ningún feature lo
+  implementa**; `onboarding` va a ser el primero (ver "Pendientes" abajo).
+  La tabla `UserProfiles`/`UserProfileDao` ya existen, pensadas para
+  `onboarding`, no para `auth`: `auth` decidió **no** usar persistencia
+  local (ver bullet de `auth` más abajo y "Dual persistence" +
+  "Technical decisions" en el `README.md` de raíz).
 - `env/`: acceso tipado a variables de entorno (`Env`, `flutter_dotenv`).
 - `error/`: jerarquía `Failure` (dartz `Either`) — `ServerFailure`,
   `AuthFailure`, `GoogleSignInFailure`, `NetworkFailure`,
@@ -93,7 +98,13 @@ compartido. Generado en `lib/l10n/gen/`.
 stack: sección "Features" del `README.md` de raíz):
 - `account/`: estado de cuenta.
 - `ai_advisor/`: consultas al LLM.
-- `auth/`: autenticación. Capas domain/data/presentation completas.
+- `auth/`: autenticación, **completa** — email/password + Google, alta con
+  verificación de email **obligatoria** (bloquea `AppState.authenticated`
+  hasta que se confirme), cierre de sesión, borrado de cuenta. Sin
+  persistencia local (decisión de seguridad — ver arriba). Detalle
+  completo (árbol de directorios, decisiones técnicas, stack) en la
+  sección "Features → auth" del `README.md` de raíz — no duplicar acá,
+  ese es la fuente actualizada.
 - `market/`: conexión con FMP para métricas de activos.
 - `onboarding/`: nacionalidad + perfil de inversor.
 - `payment/`: pago del plan Premium.
@@ -126,13 +137,17 @@ de marca verde para botones y elementos destacados. Verde de marca definido:
 
 ## Pendientes / decisiones de diseño
 
-- **Reconciliación local↔remoto (offline-first).** En `auth` la DB local es
-  best-effort: si la escritura en Drift falla, el login no falla igual
-  (Firebase Auth/Firestore son la fuente de verdad) y **no se tipa el
-  error** en el datasource local. Para el resto de los features, cuando la
-  persistencia local falle la estrategia es **reconciliar por presencia**,
-  no por tipo de error: al leer, si la fila no existe en Drift se rellena
-  desde Firestore. Matices a cubrir en la implementación:
+- **Reconciliación local↔remoto (offline-first).** `auth` quedó **afuera**
+  de este patrón a propósito (borró toda su persistencia local — ver
+  bullet de `auth` en "Estructura de directorios"): sus campos son
+  sensibles y Firebase Auth/Firestore ya son la única fuente de verdad de
+  la sesión, así que un cache local sin lector no se justificaba (quedaba
+  como PII sin cifrar en Drift). Para los features que sí manejan datos
+  propios de la app (no credenciales) — `onboarding` va a ser el primero,
+  con `UserProfiles`/`UserProfileDao` ya armados para reusar — la
+  estrategia cuando la persistencia local falle es **reconciliar por
+  presencia**, no por tipo de error: al leer, si la fila no existe en
+  Drift se rellena desde Firestore. Matices a cubrir en la implementación:
   - "Existe" no implica "está al día": la tabla lleva un marcador de
     frescura (`updatedAt` o una columna `dirty`/`pending`) para detectar
     filas desactualizadas por un update local fallido.
@@ -144,8 +159,8 @@ de marca verde para botones y elementos destacados. Verde de marca definido:
     suma costo).
   - Vive una sola vez en `sync_repository.dart` / un helper compartido, no
     duplicada por feature.
-  - Implementar cuando llegue el primer feature que lo necesite
-    (`portfolio` / `account`).
+  - Implementar cuando llegue el primer feature que lo necesite —
+    `onboarding` es el candidato actual (ver README, "Dual persistence").
 
 ## Dependencias por paso
 
@@ -176,53 +191,70 @@ USD 9.99.
 **Dev**: `flutter_test`, `flutter_lints`, `build_runner`, `freezed`,
 `json_serializable`, `riverpod_generator`, `mocktail`, `drift_dev`.
 
-## Estado actual del proyecto (2026-09-01)
+## Estado actual del proyecto (2026-09-19)
 
-- `pubspec.yaml` con **todas** las dependencias resolviendo limpio. Sumadas
-  desde el estado anterior: `go_router ^18`, `flutter_riverpod ^3.3` +
-  `riverpod_annotation ^4` + `riverpod_generator ^4`. Constraint del SDK
-  Dart: `^3.11.1` (SDK global de la máquina, compartido con otros 3
-  proyectos de portfolio ya inactivos — no representa riesgo).
+- `pubspec.yaml` con **todas** las dependencias resolviendo limpio.
+  Constraint del SDK Dart: `^3.11.1` (SDK global de la máquina, compartido
+  con otros 3 proyectos de portfolio ya inactivos — no representa riesgo).
 - `.env.example` con `GEMINI_API_KEY`, `FMP_API_KEY`,
   `STRIPE_PUBLISHABLE_KEY`. `.env` real existe local (vacío, gitignored).
 - **`lib/core/` implementado** en todas sus carpetas (ver *Estructura de
   directorios*): env, error, network, router, state, theme, usecases,
-  utils, widgets y database (Drift `AppDatabase`, `UserProfileDao` +
-  tabla, y el contrato `SyncRepository`).
+  utils, widgets y database (Drift `AppDatabase`, `UserProfileDao` + tabla
+  `UserProfiles` — reservados para `onboarding`, sin usar todavía — y el
+  contrato `SyncRepository`, todavía sin implementar por ningún feature).
 - **`lib/l10n/`**: bundle es/en montado, `MaterialApp.router` con los
   `localizationsDelegates` + `supportedLocales`.
-- **`lib/main.dart`**: carga `Env`, inicializa Firebase, corre el
-  bootstrap de sesión (lee `resolveCurrentUserUseCaseProvider` — espera a
-  `authStateChanges().first` de Firebase — y si hay sesión pasa el
-  `AppState` a `authenticated` antes del primer frame) y monta
-  `UncontrolledProviderScope` + `MaterialApp.router` con `AppTheme` y
-  `AppStateListener`. `AppStateNotifier` / `PaymentStateNotifier` son
-  `keepAlive` para que ese write pre-frame no se pierda por autodispose.
-- **Feature `auth`** — las 3 capas completas (detalle y decisiones en la
-  sección "Features → auth" del `README.md` de raíz):
-  - `domain/`: `UserEntity`, contrato `AuthRepository`, usecases
-    `getCurrentUser`, `signInWithEmail`, `signInWithGoogle`, `signOut`,
-    `signUpWithEmail`.
-  - `data/`: `UserModel` (freezed), `AuthRemoteDataSource` (Firebase Auth
-    + Firestore, excepciones tipadas + rollback de cuenta), `AuthLocalDataSource`
-    (caché Drift best-effort sin tipar) y `AuthRepositoryImpl` (orquesta
-    ambos, cache-aside + backfill).
-  - `presentation/`: `providers/` (composition root `auth_providers.dart`,
-    `AuthNotifier`/`authProvider`, `commonPasswordsProvider`), `auth_utils/`
-    (`auth_validators`, `password_strength` — política NIST 800-63B, sin
-    reglas de composición; blocklist = aviso no bloqueante —, `auth_messages`),
-    `widgets/` (adaptativos Material/Cupertino), `screens/` `LoginScreen` +
-    `RegisterScreen` (esta última **no** es ruta del router; se abre con
-    `Navigator.push`). Estado local `AuthState` (normal/loading/error);
-    éxito mueve el `AppState` global, fallo queda local.
-  - Tests: `domain` + `data` + `presentation` (validators, password_strength,
-    notifier, widget tests de ambas pantallas).
+- **`lib/main.dart` es solo un bootstrap** — carga `Env`, inicializa
+  Firebase, `runApp()`. **Ya no tiene lógica de sesión** (esto cambió
+  respecto a versiones anteriores de este doc, que decían que leía
+  `resolveCurrentUserUseCaseProvider` antes de `runApp()` — quedó
+  obsoleto). Cada feature que necesita decidir qué mostrar al arrancar
+  tiene su propio widget "wrapper" en vez de que `main()` lo resuelva —
+  `AuthWrapper` para `auth` — que resuelve *después* del primer frame
+  (mostrando un spinner neutro mientras tanto, nunca la pantalla real, así
+  no hay flash de contenido incorrecto). El patrón se espera repetir para
+  los próximos features.
+- **Feature `auth` — completa, incluye verificación de email obligatoria**
+  (no solo login/signup/signout como en versiones anteriores de este doc).
+  Detalle completo (árbol de directorios, todas las decisiones técnicas,
+  stack) en la sección "Features → auth" del `README.md` de raíz — es la
+  fuente actualizada, no duplicar acá. Puntos clave para orientarse rápido:
+  - El alta (`submitSignUp`) no autentica directamente — pasa a
+    `AuthState.verifying`; `AppState` sigue `unauthenticated` hasta que se
+    confirma el email (botón "email verificado", o solo con reabrir la app
+    si ya se verificó estando cerrada).
+  - `AuthWrapper` decide entre `LoginScreen`/`EmailVerificationScreen` de
+    forma reactiva según `AuthState`. `RegisterScreen` y
+    `EmailVerificationScreen` no son rutas — se pushean sobre lo que
+    `AuthWrapper` ya está mostrando.
+  - **Sin persistencia local** (decisión de seguridad, no de performance):
+    se borró `AuthLocalDataSource` entero — era best-effort, sin ningún
+    lector, y guardaba PII (email, nombre, foto) sin cifrar en Drift.
+    `AuthRepositoryImpl` ya no tiene una segunda dependencia además del
+    datasource remoto.
+  - `isEmailVerified` en Firestore se sincroniza (best-effort) cada vez
+    que se recarga el usuario de Firebase Auth y sale `true` — sin esto,
+    el Cloud Function de limpieza (ver abajo) podría borrar una cuenta que
+    en realidad ya se verificó.
+  - `deleteUnverifiedUsers` (Cloud Function programada, corre cada 24hs)
+    borra cuentas con `isEmailVerified: false` en Firestore con más de 7
+    días desde `createdAt` — de Firebase Auth y de Firestore.
+  - `WatchCurrentUserUseCase` y toda su cadena (métodos de lectura del
+    datasource local, `fetchUserProfile` remoto, `UserModel.fromFirestore`/
+    `.fromDrift`) se borraron: cero consumidores reales.
+  - `AutofillGroup` con hints `username`/`newUsername` (no solo `email`)
+    para que el sistema ofrezca guardar contraseñas tipeadas a mano, no
+    solo las autogeneradas por el gestor — limitación conocida de Flutter
+    en Android, no 100% garantizada igual (ver comentarios en
+    `login_screen.dart`/`register_screen.dart`).
 - **Features `onboarding` y `portfolio`**: solo un stub de pantalla en
   `presentation/` cada uno. `account`, `ai_advisor`, `market` y `payment`
-  todavía sin crear.
+  todavía sin crear. `onboarding` es el próximo feature a implementar.
 - **`assets/common_passwords.txt`**: blocklist de contraseñas (SecLists
   top 10k) para el aviso de fuerza en registro, cargado por
   `commonPasswordsProvider`.
+- **`LICENSE`** (MIT) agregado en la raíz del repo.
 - **Ramas**: `staging` es la rama de trabajo; `master` es la base para PRs.
 - **Firebase (`smartspend-35d0e`) está en plan Blaze** (el upgrade desde
   Spark ya se hizo). Secret Manager y Cloud Functions con secrets
@@ -241,6 +273,7 @@ USD 9.99.
     cliente directamente, para que no se pueda falsear un pago exitoso.
     URL: `https://us-central1-smartspend-35d0e.cloudfunctions.net/stripeWebhook`,
     registrado en el Dashboard de Stripe escuchando ese evento.
+  - `deleteUnverifiedUsers` (scheduled, v2): ver bullet de `auth` arriba.
   - Secrets en Secret Manager: `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`
     (ambos con valores reales, cargados y en uso).
   - Política de limpieza de Artifact Registry configurada en `us-central1`

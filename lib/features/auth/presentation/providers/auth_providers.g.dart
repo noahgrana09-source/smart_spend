@@ -208,54 +208,6 @@ final class AuthRemoteDataSourceProvider
 String _$authRemoteDataSourceHash() =>
     r'735919fd4087cda406fdabf2dba8bd5c82cba0ab';
 
-@ProviderFor(authLocalDataSource)
-final authLocalDataSourceProvider = AuthLocalDataSourceProvider._();
-
-final class AuthLocalDataSourceProvider
-    extends
-        $FunctionalProvider<
-          AuthLocalDataSource,
-          AuthLocalDataSource,
-          AuthLocalDataSource
-        >
-    with $Provider<AuthLocalDataSource> {
-  AuthLocalDataSourceProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'authLocalDataSourceProvider',
-        isAutoDispose: false,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$authLocalDataSourceHash();
-
-  @$internal
-  @override
-  $ProviderElement<AuthLocalDataSource> $createElement(
-    $ProviderPointer pointer,
-  ) => $ProviderElement(pointer);
-
-  @override
-  AuthLocalDataSource create(Ref ref) {
-    return authLocalDataSource(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AuthLocalDataSource value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AuthLocalDataSource>(value),
-    );
-  }
-}
-
-String _$authLocalDataSourceHash() =>
-    r'3a8d640a971e940e8b9a0323688e2d760ba6d4ce';
-
 @ProviderFor(authRepository)
 final authRepositoryProvider = AuthRepositoryProvider._();
 
@@ -295,7 +247,7 @@ final class AuthRepositoryProvider
   }
 }
 
-String _$authRepositoryHash() => r'f6f6ebac61d477d0e7f844b5024f3314cd6a58b3';
+String _$authRepositoryHash() => r'07b51b7cb1abe1466962e9dbb6c20a8d71796070';
 
 @ProviderFor(signInWithEmailUseCase)
 final signInWithEmailUseCaseProvider = SignInWithEmailUseCaseProvider._();

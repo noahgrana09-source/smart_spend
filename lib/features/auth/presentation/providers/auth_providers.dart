@@ -3,8 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../../core/database/database_providers.dart';
-import '../../data/datasources/auth_local_datasource.dart';
 import '../../data/datasources/auth_remote_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
@@ -45,14 +43,8 @@ AuthRemoteDataSource authRemoteDataSource(Ref ref) => AuthRemoteDataSourceImpl(
 );
 
 @Riverpod(keepAlive: true)
-AuthLocalDataSource authLocalDataSource(Ref ref) =>
-    AuthLocalDataSourceImpl(dao: ref.watch(userProfileDaoProvider));
-
-@Riverpod(keepAlive: true)
-AuthRepository authRepository(Ref ref) => AuthRepositoryImpl(
-  remoteDataSource: ref.watch(authRemoteDataSourceProvider),
-  localDataSource: ref.watch(authLocalDataSourceProvider),
-);
+AuthRepository authRepository(Ref ref) =>
+    AuthRepositoryImpl(remoteDataSource: ref.watch(authRemoteDataSourceProvider));
 
 @Riverpod(keepAlive: true)
 SignInWithEmailUseCase signInWithEmailUseCase(Ref ref) =>

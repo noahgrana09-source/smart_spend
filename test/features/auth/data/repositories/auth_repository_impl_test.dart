@@ -13,34 +13,10 @@ import '../auth_data_mocks.dart';
 void main() {
   late AuthRepositoryImpl repository;
   late MockAuthRemoteDataSource mockDataSource;
-  late MockAuthLocalDataSource mockLocalDataSource;
-
-  setUpAll(() {
-    // Needed for the `saveUser(any())` stubs below — mocktail requires a
-    // fallback instance for any custom type used with `any()`.
-    registerFallbackValue(
-      UserModel(
-        uid: 'fallback',
-        email: 'fallback@example.com',
-        createdAt: DateTime(2024, 1, 1),
-      ),
-    );
-  });
 
   setUp(() {
     mockDataSource = MockAuthRemoteDataSource();
-    mockLocalDataSource = MockAuthLocalDataSource();
-    repository = AuthRepositoryImpl(
-      remoteDataSource: mockDataSource,
-      localDataSource: mockLocalDataSource,
-    );
-
-    // Best-effort local caching happens on every successful remote call —
-    // stub it to succeed by default so tests that don't care about it
-    // don't need to repeat this. Tests below override these when the
-    // caching behavior itself is what's under test.
-    when(() => mockLocalDataSource.saveUser(any())).thenAnswer((_) async {});
-    when(() => mockLocalDataSource.clear()).thenAnswer((_) async {});
+    repository = AuthRepositoryImpl(remoteDataSource: mockDataSource);
   });
 
   final tUserModel = UserModel(
@@ -602,15 +578,6 @@ void main() {
         }, (_) => fail('Should be Left'));
       },
     );
-
-    test('clears the local cache after a successful delete', () async {
-      when(() => mockDataSource.deleteCurrentUser()).thenAnswer((_) async {});
-
-      await repository.deleteUser();
-      await untilCalled(() => mockLocalDataSource.clear());
-
-      verify(() => mockLocalDataSource.clear()).called(1);
-    });
   });
 
   group('getCurrentUser', () {
@@ -654,82 +621,6 @@ void main() {
 
       expect(result, isNull);
       verify(() => mockDataSource.resolveCurrentUser()).called(1);
-    });
-  });
-
-  group('local caching on successful sign-in', () {
-    test('signInWithGoogle caches the user locally', () async {
-      when(
-        () => mockDataSource.signInWithGoogle(),
-      ).thenAnswer((_) async => tUserModel);
-
-      await repository.signInWithGoogle();
-      await untilCalled(() => mockLocalDataSource.saveUser(any()));
-
-      verify(() => mockLocalDataSource.saveUser(tUserModel)).called(1);
-    });
-
-    test('signInWithEmailAndPassword caches the user locally', () async {
-      when(
-        () => mockDataSource.signInWithEmailAndPassword(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-        ),
-      ).thenAnswer((_) async => tUserModel);
-
-      await repository.signInWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-      );
-      await untilCalled(() => mockLocalDataSource.saveUser(any()));
-
-      verify(() => mockLocalDataSource.saveUser(tUserModel)).called(1);
-    });
-
-    test('signUpWithEmailAndPassword caches the user locally', () async {
-      when(
-        () => mockDataSource.signUpWithEmailAndPassword(
-          email: any(named: 'email'),
-          password: any(named: 'password'),
-          name: any(named: 'name'),
-        ),
-      ).thenAnswer((_) async => tUserModel);
-
-      await repository.signUpWithEmailAndPassword(
-        email: 'test@example.com',
-        password: 'password123',
-        name: 'Test User',
-      );
-      await untilCalled(() => mockLocalDataSource.saveUser(any()));
-
-      verify(() => mockLocalDataSource.saveUser(tUserModel)).called(1);
-    });
-
-    test(
-      'a local caching failure does not turn a successful sign-in into a Failure',
-      () async {
-        when(
-          () => mockLocalDataSource.saveUser(any()),
-        ).thenThrow(Exception('disk full'));
-        when(
-          () => mockDataSource.signInWithGoogle(),
-        ).thenAnswer((_) async => tUserModel);
-
-        final result = await repository.signInWithGoogle();
-
-        expect(result, Right(tUserEntity));
-      },
-    );
-  });
-
-  group('signOut clears the local cache', () {
-    test('clears the cache after a successful sign out', () async {
-      when(() => mockDataSource.signOut()).thenAnswer((_) async {});
-
-      await repository.signOut();
-      await untilCalled(() => mockLocalDataSource.clear());
-
-      verify(() => mockLocalDataSource.clear()).called(1);
     });
   });
 }
