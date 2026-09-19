@@ -75,20 +75,23 @@ final class AppDatabaseProvider
 
 String _$appDatabaseHash() => r'59cce38d45eeaba199eddd097d8e149d66f9f3e1';
 
-/// DAO for the cached user profile, off [appDatabaseProvider]. Consumed
-/// only by `features/auth`'s datasource wiring.
+/// DAO for the cached onboarding profile (nationality + investor
+/// profile), off [appDatabaseProvider]. Consumed only by
+/// `features/onboarding`'s datasource wiring.
 
 @ProviderFor(userProfileDao)
 final userProfileDaoProvider = UserProfileDaoProvider._();
 
-/// DAO for the cached user profile, off [appDatabaseProvider]. Consumed
-/// only by `features/auth`'s datasource wiring.
+/// DAO for the cached onboarding profile (nationality + investor
+/// profile), off [appDatabaseProvider]. Consumed only by
+/// `features/onboarding`'s datasource wiring.
 
 final class UserProfileDaoProvider
     extends $FunctionalProvider<UserProfileDao, UserProfileDao, UserProfileDao>
     with $Provider<UserProfileDao> {
-  /// DAO for the cached user profile, off [appDatabaseProvider]. Consumed
-  /// only by `features/auth`'s datasource wiring.
+  /// DAO for the cached onboarding profile (nationality + investor
+  /// profile), off [appDatabaseProvider]. Consumed only by
+  /// `features/onboarding`'s datasource wiring.
   UserProfileDaoProvider._()
     : super(
         from: null,

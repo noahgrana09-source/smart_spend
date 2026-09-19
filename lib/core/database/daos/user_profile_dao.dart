@@ -10,7 +10,7 @@ class UserProfileDao extends DatabaseAccessor<AppDatabase>
     with _$UserProfileDaoMixin {
   UserProfileDao(super.db);
 
-  Future<void> saveUser(UserProfilesCompanion entry) =>
+  Future<void> saveProfile(UserProfilesCompanion entry) =>
       into(userProfiles).insertOnConflictUpdate(entry);
 
   Future<void> clear() => delete(userProfiles).go();

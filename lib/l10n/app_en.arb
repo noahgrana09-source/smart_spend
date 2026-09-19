@@ -50,5 +50,7 @@
   "authErrorEmailNotVerified": "Your email isn't verified yet",
 
   "authPasswordStrengthWeak": "Weak password",
-  "authPasswordStrengthStrong": "Strong password"
+  "authPasswordStrengthStrong": "Strong password",
+
+  "onbDropdownDone": "Done"
 }

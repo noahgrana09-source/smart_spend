@@ -115,4 +115,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get authPasswordStrengthStrong => 'Contraseña fuerte';
+
+  @override
+  String get onbDropdownDone => 'Listo';
 }

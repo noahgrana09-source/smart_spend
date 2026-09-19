@@ -9,7 +9,7 @@ import '../auth_utils/auth_messages.dart';
 import '../providers/auth_notifier.dart';
 import '../providers/auth_state.dart';
 import '../widgets/auth_error_banner.dart';
-import '../widgets/auth_primary_button.dart';
+import '../../../../core/widgets/main_app_button.dart';
 import 'register_screen.dart';
 
 /// Shown while the account's email is unverified — either right after a
@@ -96,7 +96,7 @@ class EmailVerificationScreen extends ConsumerWidget {
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 32),
-                    AuthPrimaryButton(
+                    MainAppButton(
                       label: l10n.authEmailVerifiedButton,
                       isLoading: isLoading,
                       onPressed: isLoading

@@ -295,6 +295,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Strong password'**
   String get authPasswordStrengthStrong;
+
+  /// No description provided for @onbDropdownDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get onbDropdownDone;
 }
 
 class _AppLocalizationsDelegate

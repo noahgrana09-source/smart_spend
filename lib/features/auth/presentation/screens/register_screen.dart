@@ -11,7 +11,7 @@ import '../providers/auth_state.dart';
 import '../providers/common_passwords_provider.dart';
 import '../widgets/auth_error_banner.dart';
 import '../widgets/auth_mode_link.dart';
-import '../widgets/auth_primary_button.dart';
+import '../../../../core/widgets/main_app_button.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/form_scaffold.dart';
 import '../widgets/google_sign_in_button.dart';
@@ -218,7 +218,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              AuthPrimaryButton(
+              MainAppButton(
                 label: l10n.authRegisterButton,
                 onPressed: isLoading ? null : _submit,
                 isLoading: isLoading,

@@ -40,5 +40,7 @@
   "authErrorEmailNotVerified": "Tu correo todavía no está verificado",
 
   "authPasswordStrengthWeak": "Contraseña débil",
-  "authPasswordStrengthStrong": "Contraseña fuerte"
+  "authPasswordStrengthStrong": "Contraseña fuerte",
+
+  "onbDropdownDone": "Listo"
 }

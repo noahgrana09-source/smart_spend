@@ -113,4 +113,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authPasswordStrengthStrong => 'Strong password';
+
+  @override
+  String get onbDropdownDone => 'Done';
 }

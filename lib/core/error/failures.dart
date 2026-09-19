@@ -54,3 +54,9 @@ class UserPersistenceFailure extends Failure {
   /// [message].
   const UserPersistenceFailure({required super.code, super.message});
 }
+
+/// Failure reading or writing local (Drift/SQLite) data.
+class DatabaseFailure extends Failure {
+  /// Creates a [DatabaseFailure] with a [code] and optional [message].
+  const DatabaseFailure({required super.code, super.message});
+}
