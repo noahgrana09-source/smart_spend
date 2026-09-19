@@ -9,7 +9,7 @@ USD 9.99 unlock (Stripe) after 3 free LLM queries.
 ## Architecture
 
 - **Clean Architecture per feature** — `domain/` (contracts, pure Dart),
-  `data/` (datasources + repository impl), `presentation/` (optional per
+  `data/` (datasources + implemented repositories), `presentation/` (optional per
   feature). Fallible operations return `Either<Failure, T>` (dartz).
 - **Riverpod** (`flutter_riverpod` + `riverpod_annotation` +
   `riverpod_generator`) for DI and state. `domain/` and `data/` stay
@@ -19,9 +19,19 @@ USD 9.99 unlock (Stripe) after 3 free LLM queries.
   (`unauthenticated → authenticated → onboarded`, plus `error`) in
   `lib/core/state`; `AppStateListener` (the `MaterialApp.router` builder)
   drives `go_router`. No `GoRouter.redirect`.
-- **Dual persistence** — Drift/SQLite is the local source of truth for
-  reads; Firestore is the remote copy for backup and multi-device sync
-  (`lib/core/database/sync_repository.dart` is the contract).
+- **Dual persistence** — `lib/core/database/sync_repository.dart` is the
+  intended contract for a feature whose data it owns/produces itself:
+  Drift/SQLite as the local source of truth for reads, Firestore as the
+  remote copy for backup and multi-device sync. `onboarding` is meant to
+  be the first real user of it (risk profile, nationality — non-sensitive,
+  app-produced, read on nearly every screen, so local-first pays for
+  itself). `auth` deliberately opts out: Firebase Auth/Firestore are
+  themselves the only source of truth for a session, and its profile
+  fields are sensitive enough that caching them in an unencrypted local
+  database isn't worth it for a feature with no current reader — see
+  "Technical decisions" under `auth` below. The `UserProfiles`
+  table/`UserProfileDao` (`lib/core/database/`) exist already, kept for
+  `onboarding` to build on rather than pulled in as auth-specific.
 - **Adaptive UI** — presentation widgets detect the OS and render Material
   or Cupertino; where Cupertino has no equivalent, Material imitates it.
 - **Adaptive theme** — `AppTheme` (`lib/core/theme/app_theme.dart`) builds a
@@ -30,7 +40,7 @@ USD 9.99 unlock (Stripe) after 3 free LLM queries.
   sharing `AppTextStyles.textTheme`. `MaterialApp.router` (`lib/main.dart`)
   wires both (`theme` / `darkTheme`) with `themeMode: ThemeMode.system`, so
   the app follows the OS-level light/dark setting automatically — there is
-  no in-app toggle or persisted override yet.
+  no in-app toggle or persisted override.
 - **l10n** — single bundle in `lib/l10n/` (es/en), keys prefixed per
   feature (`auth*`, `onboarding*`, …).
 - **Boot-time decisions live in the feature, not in `main()`** —
@@ -115,7 +125,6 @@ auth/
 │       └── sign_up_with_email_usecase.dart
 ├── data/
 │   ├── datasources/
-│   │   ├── auth_local_datasource.dart
 │   │   └── auth_remote_datasource.dart
 │   ├── models/
 │   │   └── user_model.dart
@@ -155,11 +164,9 @@ auth/
   exceptions, rolls back a just-created account if the profile write
   fails; also sends the verification email on sign-up, reloads/checks
   `emailVerified`, and deletes the Firebase Auth user + Firestore profile
-  on `deleteUser`), `AuthLocalDataSource` (Drift profile cache — just
-  `saveUser`/`clear`; write-only today, nothing reads it back yet),
-  `AuthRepositoryImpl` (orchestrates both; local cache write is
-  best-effort and never turns a successful remote result into a
-  `Failure`).
+  on `deleteUser`), `AuthRepositoryImpl` (thin — maps exceptions to
+  `Failure`, no local persistence of its own; see "Technical decisions"
+  below).
 - `presentation/` — `providers/` (`AuthNotifier`,
   `commonPasswordsProvider`), `auth_utils/`, `widgets/`, `screens/`
   (`AuthWrapper`, `LoginScreen`, `RegisterScreen`,
@@ -234,8 +241,27 @@ auth/
   SecLists top 10k, via `commonPasswordsProvider`). On top, a non-blocking
   weak/strong hint below the field (length + character-variety score).
   Sign-in only checks the field is non-empty.
+- **No local persistence** — `AuthRepositoryImpl` used to best-effort
+  cache the signed-in user's profile (email, display name, photo URL,
+  verification status) into a Drift table via an `AuthLocalDataSource`,
+  write-only, with nothing ever reading it back. Removed: Firebase
+  Auth/Firestore are already the only source of truth for a session (the
+  cache was never consulted to decide whether a session exists —
+  `resolveCurrentUser`/`getCurrentUser` always went to the remote data
+  source), so it bought nothing, while sitting there as real user PII in
+  an unencrypted local database (Drift/`sqlite3_flutter_libs` has no
+  encryption-at-rest here) with no reader to justify the exposure. The
+  underlying `UserProfiles` table and `UserProfileDao`
+  (`lib/core/database/`) weren't deleted — they're earmarked for
+  `onboarding`, whose data (risk profile, nationality) is app-produced
+  rather than security-sensitive, and is the kind of thing local-first
+  reads are actually meant for (see "Dual persistence" in Architecture).
+  If `auth` ever needs an offline-readable profile again (e.g. a display
+  name on `Home` without a network round-trip), it should be rebuilt
+  scoped to exactly the non-sensitive fields that screen needs, not
+  reintroduced wholesale.
 
-**Stack**: `firebase_auth`, `cloud_firestore`, `google_sign_in`, `drift`,
+**Stack**: `firebase_auth`, `cloud_firestore`, `google_sign_in`,
 `flutter_riverpod` + `riverpod_annotation`, `freezed`, `dartz`,
 `flutter_svg` (Google mark, inlined), `lottie` (`FormScaffold`'s header
 animation), `mocktail` (tests).

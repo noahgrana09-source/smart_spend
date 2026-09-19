@@ -2,15 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:smart_spend/features/auth/data/datasources/auth_local_datasource.dart';
 import 'package:smart_spend/features/auth/data/datasources/auth_remote_datasource.dart';
-import 'package:smart_spend/core/database/daos/user_profile_dao.dart';
 
 class MockAuthRemoteDataSource extends Mock implements AuthRemoteDataSource {}
-
-class MockAuthLocalDataSource extends Mock implements AuthLocalDataSource {}
-
-class MockUserProfileDao extends Mock implements UserProfileDao {}
 
 class MockFirebaseAuth extends Mock implements FirebaseAuth {}
 
