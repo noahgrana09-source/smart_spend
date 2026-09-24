@@ -22,7 +22,7 @@ class OnbQuestionCard<T> extends StatefulWidget {
     required this.options,
     required this.onChanged,
     this.allowMultipleChoice = false,
-    this.initialSelection = const [],
+    this.initialSelection,
   });
 
   final String question;
@@ -31,7 +31,11 @@ class OnbQuestionCard<T> extends StatefulWidget {
   /// Whether more than one option can be selected at once.
   final bool allowMultipleChoice;
 
-  final List<T> initialSelection;
+  /// `null` (rather than defaulting to `const []`) because an untyped
+  /// empty-list default on a generic constructor parameter is canonicalized
+  /// once as `List<Never>` — independent of `T` — which then throws at
+  /// runtime the moment anything is added to a `Set` built from it.
+  final List<T>? initialSelection;
 
   /// Called with the full current selection every time it changes.
   final ValueChanged<List<T>> onChanged;
@@ -41,7 +45,7 @@ class OnbQuestionCard<T> extends StatefulWidget {
 }
 
 class _OnbQuestionCardState<T> extends State<OnbQuestionCard<T>> {
-  late final Set<T> _selected = widget.initialSelection.toSet();
+  late final Set<T> _selected = Set<T>.of(widget.initialSelection ?? const []);
 
   void _toggle(T value) {
     setState(() {

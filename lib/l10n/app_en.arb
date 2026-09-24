@@ -52,5 +52,54 @@
   "authPasswordStrengthWeak": "Weak password",
   "authPasswordStrengthStrong": "Strong password",
 
-  "onbDropdownDone": "Done"
+  "onbDropdownDone": "Done",
+
+  "onbGetStartedGreeting": "Hi {name}, let's get you started!",
+  "@onbGetStartedGreeting": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "onbStartButton": "Start",
+
+  "onbPickNationalityTitle": "Pick your nationality",
+  "onbNationalityLabel": "Nationality",
+  "onbNextButton": "Next",
+  "onbFinishButton": "Finish",
+  "onbErrorGeneric": "Something went wrong: {title}. Please try again.",
+  "@onbErrorGeneric": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  },
+
+  "onbTestTimeHorizonQuestion": "How long do you plan to keep this money invested before you might need it?",
+  "onbTestTimeHorizonOption1": "Less than 1 year",
+  "onbTestTimeHorizonOption2": "1 to 3 years",
+  "onbTestTimeHorizonOption3": "3 to 7 years",
+  "onbTestTimeHorizonOption4": "More than 7 years",
+
+  "onbTestMarketDropQuestion": "Your portfolio drops 20% in a few weeks. What do you do?",
+  "onbTestMarketDropOption1": "Sell everything to avoid further losses",
+  "onbTestMarketDropOption2": "Sell part of it to reduce risk",
+  "onbTestMarketDropOption3": "Do nothing and wait it out",
+  "onbTestMarketDropOption4": "Buy more while prices are low",
+
+  "onbTestGoalQuestion": "What's your main investment goal?",
+  "onbTestGoalOption1": "Preserve my capital",
+  "onbTestGoalOption2": "Generate steady income",
+  "onbTestGoalOption3": "Grow my capital moderately",
+  "onbTestGoalOption4": "Maximize long-term growth",
+
+  "onbTestSituationQuestion": "Which of these describe your financial situation? (Select all that apply)",
+  "onbTestSituationOption1": "I have an emergency fund covering 3+ months of expenses",
+  "onbTestSituationOption2": "I have stable, predictable income",
+  "onbTestSituationOption3": "I have other savings or investments besides this",
+  "onbTestSituationOption4": "This money is earmarked for a near-term expense",
+
+  "onbTestExperienceQuestion": "How would you describe your investing experience?",
+  "onbTestExperienceOption1": "None, I'm new to investing",
+  "onbTestExperienceOption2": "Some, I understand the basics",
+  "onbTestExperienceOption3": "Good, I actively follow the markets",
+  "onbTestExperienceOption4": "Extensive, I have advanced or professional experience"
 }

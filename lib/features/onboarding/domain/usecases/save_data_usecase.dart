@@ -1,9 +1,9 @@
 import 'package:dartz/dartz.dart';
 import 'package:equatable/equatable.dart';
 
+import '../../../../core/entities/onb_data_entity.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/usecases/usecase.dart';
-import '../entities/onb_data_entity.dart';
 import '../repositories/onb_repository.dart';
 
 /// Use case for saving the user's onboarding data (nationality + investor

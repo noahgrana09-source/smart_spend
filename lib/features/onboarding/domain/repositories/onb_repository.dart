@@ -1,7 +1,8 @@
 import 'package:dartz/dartz.dart';
 
+import '../../../../core/entities/app_user_entity.dart';
+import '../../../../core/entities/onb_data_entity.dart';
 import '../../../../core/error/failures.dart';
-import '../entities/onb_data_entity.dart';
 
 /// Abstract contract for the onboarding repository.
 ///
@@ -15,4 +16,16 @@ abstract class OnbRepository {
     required String nationality,
     required String investorProfile,
   });
+
+  /// Returns the currently signed-in user's basic profile.
+  ///
+  /// Returns [AppUserEntity] on success or a [Failure] on error.
+  Future<Either<Failure, AppUserEntity>> getCurrentUser();
+
+  /// Returns the currently signed-in user's onboarding data as already
+  /// persisted on this device, or `null` if there's no local row for
+  /// them yet (onboarding hasn't been completed on this device).
+  ///
+  /// Returns `null`/[OnbDataEntity] on success or a [Failure] on error.
+  Future<Either<Failure, OnbDataEntity?>> getLocalData();
 }

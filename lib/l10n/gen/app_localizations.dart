@@ -301,6 +301,198 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done'**
   String get onbDropdownDone;
+
+  /// No description provided for @onbGetStartedGreeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi {name}, let\'s get you started!'**
+  String onbGetStartedGreeting(String name);
+
+  /// No description provided for @onbStartButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get onbStartButton;
+
+  /// No description provided for @onbPickNationalityTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick your nationality'**
+  String get onbPickNationalityTitle;
+
+  /// No description provided for @onbNationalityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Nationality'**
+  String get onbNationalityLabel;
+
+  /// No description provided for @onbNextButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get onbNextButton;
+
+  /// No description provided for @onbFinishButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish'**
+  String get onbFinishButton;
+
+  /// No description provided for @onbErrorGeneric.
+  ///
+  /// In en, this message translates to:
+  /// **'Something went wrong: {title}. Please try again.'**
+  String onbErrorGeneric(String title);
+
+  /// No description provided for @onbTestTimeHorizonQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'How long do you plan to keep this money invested before you might need it?'**
+  String get onbTestTimeHorizonQuestion;
+
+  /// No description provided for @onbTestTimeHorizonOption1.
+  ///
+  /// In en, this message translates to:
+  /// **'Less than 1 year'**
+  String get onbTestTimeHorizonOption1;
+
+  /// No description provided for @onbTestTimeHorizonOption2.
+  ///
+  /// In en, this message translates to:
+  /// **'1 to 3 years'**
+  String get onbTestTimeHorizonOption2;
+
+  /// No description provided for @onbTestTimeHorizonOption3.
+  ///
+  /// In en, this message translates to:
+  /// **'3 to 7 years'**
+  String get onbTestTimeHorizonOption3;
+
+  /// No description provided for @onbTestTimeHorizonOption4.
+  ///
+  /// In en, this message translates to:
+  /// **'More than 7 years'**
+  String get onbTestTimeHorizonOption4;
+
+  /// No description provided for @onbTestMarketDropQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Your portfolio drops 20% in a few weeks. What do you do?'**
+  String get onbTestMarketDropQuestion;
+
+  /// No description provided for @onbTestMarketDropOption1.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell everything to avoid further losses'**
+  String get onbTestMarketDropOption1;
+
+  /// No description provided for @onbTestMarketDropOption2.
+  ///
+  /// In en, this message translates to:
+  /// **'Sell part of it to reduce risk'**
+  String get onbTestMarketDropOption2;
+
+  /// No description provided for @onbTestMarketDropOption3.
+  ///
+  /// In en, this message translates to:
+  /// **'Do nothing and wait it out'**
+  String get onbTestMarketDropOption3;
+
+  /// No description provided for @onbTestMarketDropOption4.
+  ///
+  /// In en, this message translates to:
+  /// **'Buy more while prices are low'**
+  String get onbTestMarketDropOption4;
+
+  /// No description provided for @onbTestGoalQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s your main investment goal?'**
+  String get onbTestGoalQuestion;
+
+  /// No description provided for @onbTestGoalOption1.
+  ///
+  /// In en, this message translates to:
+  /// **'Preserve my capital'**
+  String get onbTestGoalOption1;
+
+  /// No description provided for @onbTestGoalOption2.
+  ///
+  /// In en, this message translates to:
+  /// **'Generate steady income'**
+  String get onbTestGoalOption2;
+
+  /// No description provided for @onbTestGoalOption3.
+  ///
+  /// In en, this message translates to:
+  /// **'Grow my capital moderately'**
+  String get onbTestGoalOption3;
+
+  /// No description provided for @onbTestGoalOption4.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximize long-term growth'**
+  String get onbTestGoalOption4;
+
+  /// No description provided for @onbTestSituationQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'Which of these describe your financial situation? (Select all that apply)'**
+  String get onbTestSituationQuestion;
+
+  /// No description provided for @onbTestSituationOption1.
+  ///
+  /// In en, this message translates to:
+  /// **'I have an emergency fund covering 3+ months of expenses'**
+  String get onbTestSituationOption1;
+
+  /// No description provided for @onbTestSituationOption2.
+  ///
+  /// In en, this message translates to:
+  /// **'I have stable, predictable income'**
+  String get onbTestSituationOption2;
+
+  /// No description provided for @onbTestSituationOption3.
+  ///
+  /// In en, this message translates to:
+  /// **'I have other savings or investments besides this'**
+  String get onbTestSituationOption3;
+
+  /// No description provided for @onbTestSituationOption4.
+  ///
+  /// In en, this message translates to:
+  /// **'This money is earmarked for a near-term expense'**
+  String get onbTestSituationOption4;
+
+  /// No description provided for @onbTestExperienceQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'How would you describe your investing experience?'**
+  String get onbTestExperienceQuestion;
+
+  /// No description provided for @onbTestExperienceOption1.
+  ///
+  /// In en, this message translates to:
+  /// **'None, I\'m new to investing'**
+  String get onbTestExperienceOption1;
+
+  /// No description provided for @onbTestExperienceOption2.
+  ///
+  /// In en, this message translates to:
+  /// **'Some, I understand the basics'**
+  String get onbTestExperienceOption2;
+
+  /// No description provided for @onbTestExperienceOption3.
+  ///
+  /// In en, this message translates to:
+  /// **'Good, I actively follow the markets'**
+  String get onbTestExperienceOption3;
+
+  /// No description provided for @onbTestExperienceOption4.
+  ///
+  /// In en, this message translates to:
+  /// **'Extensive, I have advanced or professional experience'**
+  String get onbTestExperienceOption4;
 }
 
 class _AppLocalizationsDelegate

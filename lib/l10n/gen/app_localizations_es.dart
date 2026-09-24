@@ -118,4 +118,116 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get onbDropdownDone => 'Listo';
+
+  @override
+  String onbGetStartedGreeting(String name) {
+    return '¡Hola $name, empecemos!';
+  }
+
+  @override
+  String get onbStartButton => 'Comenzar';
+
+  @override
+  String get onbPickNationalityTitle => 'Elegí tu nacionalidad';
+
+  @override
+  String get onbNationalityLabel => 'Nacionalidad';
+
+  @override
+  String get onbNextButton => 'Siguiente';
+
+  @override
+  String get onbFinishButton => 'Finalizar';
+
+  @override
+  String onbErrorGeneric(String title) {
+    return 'Algo salió mal: $title. Probá de nuevo.';
+  }
+
+  @override
+  String get onbTestTimeHorizonQuestion =>
+      '¿Por cuánto tiempo planeás mantener este dinero invertido antes de necesitarlo?';
+
+  @override
+  String get onbTestTimeHorizonOption1 => 'Menos de 1 año';
+
+  @override
+  String get onbTestTimeHorizonOption2 => 'De 1 a 3 años';
+
+  @override
+  String get onbTestTimeHorizonOption3 => 'De 3 a 7 años';
+
+  @override
+  String get onbTestTimeHorizonOption4 => 'Más de 7 años';
+
+  @override
+  String get onbTestMarketDropQuestion =>
+      'Tu portafolio cae un 20% en pocas semanas. ¿Qué hacés?';
+
+  @override
+  String get onbTestMarketDropOption1 => 'Vendo todo para evitar más pérdidas';
+
+  @override
+  String get onbTestMarketDropOption2 =>
+      'Vendo una parte para reducir el riesgo';
+
+  @override
+  String get onbTestMarketDropOption3 =>
+      'No hago nada y espero a que se recupere';
+
+  @override
+  String get onbTestMarketDropOption4 =>
+      'Compro más aprovechando los precios bajos';
+
+  @override
+  String get onbTestGoalQuestion =>
+      '¿Cuál es tu principal objetivo de inversión?';
+
+  @override
+  String get onbTestGoalOption1 => 'Preservar mi capital';
+
+  @override
+  String get onbTestGoalOption2 => 'Generar ingresos estables';
+
+  @override
+  String get onbTestGoalOption3 => 'Hacer crecer mi capital moderadamente';
+
+  @override
+  String get onbTestGoalOption4 => 'Maximizar el crecimiento a largo plazo';
+
+  @override
+  String get onbTestSituationQuestion =>
+      '¿Cuáles de estas describen tu situación financiera? (Seleccioná todas las que apliquen)';
+
+  @override
+  String get onbTestSituationOption1 =>
+      'Tengo un fondo de emergencia que cubre 3+ meses de gastos';
+
+  @override
+  String get onbTestSituationOption2 => 'Tengo ingresos estables y predecibles';
+
+  @override
+  String get onbTestSituationOption3 =>
+      'Tengo otros ahorros o inversiones además de esto';
+
+  @override
+  String get onbTestSituationOption4 =>
+      'Este dinero está destinado a un gasto próximo';
+
+  @override
+  String get onbTestExperienceQuestion =>
+      '¿Cómo describirías tu experiencia invirtiendo?';
+
+  @override
+  String get onbTestExperienceOption1 => 'Ninguna, soy nuevo invirtiendo';
+
+  @override
+  String get onbTestExperienceOption2 => 'Alguna, entiendo lo básico';
+
+  @override
+  String get onbTestExperienceOption3 => 'Buena, sigo los mercados activamente';
+
+  @override
+  String get onbTestExperienceOption4 =>
+      'Extensa, tengo experiencia avanzada o profesional';
 }

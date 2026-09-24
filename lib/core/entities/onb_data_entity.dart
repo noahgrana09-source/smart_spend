@@ -4,7 +4,9 @@ import 'package:equatable/equatable.dart';
 ///
 /// Both fields are required and non-nullable — the app blocks progress
 /// past onboarding until they're set, so a null value here would be a
-/// business-logic error, not a valid state.
+/// business-logic error, not a valid state. Lives in `core/` (not
+/// `features/onboarding/`) because it's read by other features too, not
+/// just written by onboarding.
 class OnbDataEntity extends Equatable {
   /// The user's nationality.
   final String nationality;

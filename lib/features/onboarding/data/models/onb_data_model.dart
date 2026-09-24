@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../../core/database/app_database.dart';
-import '../../domain/entities/onb_data_entity.dart';
+import '../../../../core/entities/onb_data_entity.dart';
 
 /// Data model representing the user's onboarding data.
 ///
@@ -27,6 +27,15 @@ class OnbDataModel extends Equatable {
     required this.nationality,
     required this.investorProfile,
   });
+
+  /// Creates an [OnbDataModel] from a Drift [UserProfile] row.
+  factory OnbDataModel.fromRow(UserProfile row) {
+    return OnbDataModel(
+      uid: row.uid,
+      nationality: row.nationality,
+      investorProfile: row.investorProfile,
+    );
+  }
 
   /// Converts this [OnbDataModel] to a [UserProfilesCompanion] for
   /// [UserProfileDao.saveProfile].

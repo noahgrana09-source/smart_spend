@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../features/auth/presentation/screens/auth_wrapper.dart';
-import '../../features/onboarding/presentation/screens/onboarding_screen.dart';
+import '../../features/onboarding/presentation/screens/onb_wrapper.dart';
 import '../../features/portfolio/presentation/screens/home.dart';
 import '../state/app_states.dart';
 import '../state/state_providers.dart';
@@ -35,7 +35,7 @@ GoRouter appRouter(Ref ref) {
       GoRoute(path: '/login', builder: (context, state) => const AuthWrapper()),
       GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
+        builder: (context, state) => const OnbWrapper(),
       ),
       GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
     ],

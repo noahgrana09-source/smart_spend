@@ -8,7 +8,7 @@ import '../../../../l10n/gen/app_localizations.dart';
 import '../auth_utils/auth_messages.dart';
 import '../providers/auth_notifier.dart';
 import '../providers/auth_state.dart';
-import '../widgets/auth_error_banner.dart';
+import '../../../../core/widgets/app_error_banner.dart';
 import '../../../../core/widgets/main_app_button.dart';
 import 'register_screen.dart';
 
@@ -80,7 +80,7 @@ class EmailVerificationScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    AuthErrorBanner(message: error),
+                    AppErrorBanner(message: error),
                     if (error != null) const SizedBox(height: 16),
                     Icon(
                       PlatformUtils.isCupertino

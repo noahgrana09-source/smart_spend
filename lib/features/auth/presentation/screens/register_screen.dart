@@ -9,7 +9,7 @@ import '../auth_utils/password_strength.dart';
 import '../providers/auth_notifier.dart';
 import '../providers/auth_state.dart';
 import '../providers/common_passwords_provider.dart';
-import '../widgets/auth_error_banner.dart';
+import '../../../../core/widgets/app_error_banner.dart';
 import '../widgets/auth_mode_link.dart';
 import '../../../../core/widgets/main_app_button.dart';
 import '../widgets/auth_text_field.dart';
@@ -118,7 +118,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AuthErrorBanner(message: generalError),
+              AppErrorBanner(message: generalError),
               if (generalError != null) const SizedBox(height: 16),
               AuthTextField(
                 controller: _nameController,

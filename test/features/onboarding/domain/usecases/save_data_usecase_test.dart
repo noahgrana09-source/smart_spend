@@ -1,8 +1,8 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:smart_spend/core/entities/onb_data_entity.dart';
 import 'package:smart_spend/core/error/failures.dart';
-import 'package:smart_spend/features/onboarding/domain/entities/onb_data_entity.dart';
 import 'package:smart_spend/features/onboarding/domain/usecases/save_data_usecase.dart';
 
 import '../onb_domain_mocks.dart';

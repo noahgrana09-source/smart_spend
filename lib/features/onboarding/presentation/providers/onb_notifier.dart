@@ -1,38 +1,12 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import '../../../../core/database/database_providers.dart';
 import '../../../../core/state/app_states.dart';
 import '../../../../core/state/state_providers.dart';
-import '../../data/datasources/onb_local_datasource.dart';
-import '../../data/repositories/onb_repository_impl.dart';
-import '../../domain/repositories/onb_repository.dart';
 import '../../domain/usecases/save_data_usecase.dart';
+import 'onb_providers.dart';
 import 'onb_state.dart';
 
 part 'onb_notifier.g.dart';
-
-/// Composition root for the `onboarding` feature, inlined here instead of
-/// a separate `onb_providers.dart` — a single use case doesn't earn its
-/// own file. Every link is `keepAlive`: stateless, shared for the whole
-/// session.
-
-@Riverpod(keepAlive: true)
-FirebaseAuth onbFirebaseAuth(Ref ref) => FirebaseAuth.instance;
-
-@Riverpod(keepAlive: true)
-OnbLocalDataSource onbLocalDataSource(Ref ref) => OnbLocalDataSourceImpl(
-  firebaseAuth: ref.watch(onbFirebaseAuthProvider),
-  userProfileDao: ref.watch(userProfileDaoProvider),
-);
-
-@Riverpod(keepAlive: true)
-OnbRepository onbRepository(Ref ref) =>
-    OnbRepositoryImpl(localDataSource: ref.watch(onbLocalDataSourceProvider));
-
-@Riverpod(keepAlive: true)
-SaveDataUseCase saveDataUseCase(Ref ref) =>
-    SaveDataUseCase(ref.watch(onbRepositoryProvider));
 
 /// Drives the onboarding screens and owns the transition to
 /// `AppState.onboarded()` once the user's data is saved.
