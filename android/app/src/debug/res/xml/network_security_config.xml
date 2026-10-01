@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Debug-build-only: allows plaintext HTTP to the Firebase Local Emulator
+  Suite (started via `firebase emulators:start`, see firebase.json's
+  `emulators` block), which doesn't speak TLS. 10.0.2.2 is the special
+  alias an Android emulator uses to reach the host machine's own
+  localhost; the Firebase SDK's automatic host mapping rewrites
+  'localhost'/'127.0.0.1' to it (see main.dart's
+  useAuthEmulator/useFirestoreEmulator calls, gated on the
+  USE_FIREBASE_EMULATOR dart-define). Lives under src/debug/, not
+  src/main/, so a release build never gets this relaxed.
+-->
+<network-security-config>
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="false">10.0.2.2</domain>
+    <domain includeSubdomains="false">localhost</domain>
+  </domain-config>
+</network-security-config>

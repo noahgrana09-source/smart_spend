@@ -79,7 +79,7 @@ class _GetYouStartedScreenState extends ConsumerState<GetYouStartedScreen> {
                 const SizedBox(height: 24),
                 Lottie.asset(
                   'assets/animations/auth_success.json',
-                  height: 200,
+                  height: 240,
                   repeat: true,
                 ),
                 const SizedBox(height: 24),
