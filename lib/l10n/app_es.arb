@@ -40,5 +40,46 @@
   "authErrorEmailNotVerified": "Tu correo todavía no está verificado",
 
   "authPasswordStrengthWeak": "Contraseña débil",
-  "authPasswordStrengthStrong": "Contraseña fuerte"
+  "authPasswordStrengthStrong": "Contraseña fuerte",
+
+  "onbDropdownDone": "Listo",
+
+  "onbGetStartedGreeting": "¡Hola {name}, empecemos!",
+  "onbStartButton": "Comenzar",
+
+  "onbPickNationalityTitle": "Elegí tu nacionalidad",
+  "onbNationalityLabel": "Nacionalidad",
+  "onbNextButton": "Siguiente",
+  "onbFinishButton": "Finalizar",
+  "onbErrorGeneric": "Algo salió mal: {title}. Probá de nuevo.",
+
+  "onbTestTimeHorizonQuestion": "¿Por cuánto tiempo planeás mantener este dinero invertido antes de necesitarlo?",
+  "onbTestTimeHorizonOption1": "Menos de 1 año",
+  "onbTestTimeHorizonOption2": "De 1 a 3 años",
+  "onbTestTimeHorizonOption3": "De 3 a 7 años",
+  "onbTestTimeHorizonOption4": "Más de 7 años",
+
+  "onbTestMarketDropQuestion": "Tu portafolio cae un 20% en pocas semanas. ¿Qué hacés?",
+  "onbTestMarketDropOption1": "Vendo todo para evitar más pérdidas",
+  "onbTestMarketDropOption2": "Vendo una parte para reducir el riesgo",
+  "onbTestMarketDropOption3": "No hago nada y espero a que se recupere",
+  "onbTestMarketDropOption4": "Compro más aprovechando los precios bajos",
+
+  "onbTestGoalQuestion": "¿Cuál es tu principal objetivo de inversión?",
+  "onbTestGoalOption1": "Preservar mi capital",
+  "onbTestGoalOption2": "Generar ingresos estables",
+  "onbTestGoalOption3": "Hacer crecer mi capital moderadamente",
+  "onbTestGoalOption4": "Maximizar el crecimiento a largo plazo",
+
+  "onbTestSituationQuestion": "¿Cuáles de estas describen tu situación financiera? (Seleccioná todas las que apliquen)",
+  "onbTestSituationOption1": "Tengo un fondo de emergencia que cubre 3+ meses de gastos",
+  "onbTestSituationOption2": "Tengo ingresos estables y predecibles",
+  "onbTestSituationOption3": "Tengo otros ahorros o inversiones además de esto",
+  "onbTestSituationOption4": "Este dinero está destinado a un gasto próximo",
+
+  "onbTestExperienceQuestion": "¿Cómo describirías tu experiencia invirtiendo?",
+  "onbTestExperienceOption1": "Ninguna, soy nuevo invirtiendo",
+  "onbTestExperienceOption2": "Alguna, entiendo lo básico",
+  "onbTestExperienceOption3": "Buena, sigo los mercados activamente",
+  "onbTestExperienceOption4": "Extensa, tengo experiencia avanzada o profesional"
 }

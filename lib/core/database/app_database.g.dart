@@ -18,72 +18,30 @@ class $UserProfilesTable extends UserProfiles
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  static const VerificationMeta _nationalityMeta = const VerificationMeta(
+    'nationality',
+  );
   @override
-  late final GeneratedColumn<String> email = GeneratedColumn<String>(
-    'email',
+  late final GeneratedColumn<String> nationality = GeneratedColumn<String>(
+    'nationality',
     aliasedName,
     false,
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _displayNameMeta = const VerificationMeta(
-    'displayName',
+  static const VerificationMeta _investorProfileMeta = const VerificationMeta(
+    'investorProfile',
   );
   @override
-  late final GeneratedColumn<String> displayName = GeneratedColumn<String>(
-    'display_name',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _photoUrlMeta = const VerificationMeta(
-    'photoUrl',
-  );
-  @override
-  late final GeneratedColumn<String> photoUrl = GeneratedColumn<String>(
-    'photo_url',
-    aliasedName,
-    true,
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _isEmailVerifiedMeta = const VerificationMeta(
-    'isEmailVerified',
-  );
-  @override
-  late final GeneratedColumn<bool> isEmailVerified = GeneratedColumn<bool>(
-    'is_email_verified',
+  late final GeneratedColumn<String> investorProfile = GeneratedColumn<String>(
+    'investor_profile',
     aliasedName,
     false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_email_verified" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
+    type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
   @override
-  List<GeneratedColumn> get $columns => [
-    uid,
-    email,
-    displayName,
-    photoUrl,
-    isEmailVerified,
-    createdAt,
-  ];
+  List<GeneratedColumn> get $columns => [uid, nationality, investorProfile];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -104,45 +62,27 @@ class $UserProfilesTable extends UserProfiles
     } else if (isInserting) {
       context.missing(_uidMeta);
     }
-    if (data.containsKey('email')) {
+    if (data.containsKey('nationality')) {
       context.handle(
-        _emailMeta,
-        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_emailMeta);
-    }
-    if (data.containsKey('display_name')) {
-      context.handle(
-        _displayNameMeta,
-        displayName.isAcceptableOrUnknown(
-          data['display_name']!,
-          _displayNameMeta,
+        _nationalityMeta,
+        nationality.isAcceptableOrUnknown(
+          data['nationality']!,
+          _nationalityMeta,
         ),
       );
+    } else if (isInserting) {
+      context.missing(_nationalityMeta);
     }
-    if (data.containsKey('photo_url')) {
+    if (data.containsKey('investor_profile')) {
       context.handle(
-        _photoUrlMeta,
-        photoUrl.isAcceptableOrUnknown(data['photo_url']!, _photoUrlMeta),
-      );
-    }
-    if (data.containsKey('is_email_verified')) {
-      context.handle(
-        _isEmailVerifiedMeta,
-        isEmailVerified.isAcceptableOrUnknown(
-          data['is_email_verified']!,
-          _isEmailVerifiedMeta,
+        _investorProfileMeta,
+        investorProfile.isAcceptableOrUnknown(
+          data['investor_profile']!,
+          _investorProfileMeta,
         ),
       );
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
     } else if (isInserting) {
-      context.missing(_createdAtMeta);
+      context.missing(_investorProfileMeta);
     }
     return context;
   }
@@ -157,25 +97,13 @@ class $UserProfilesTable extends UserProfiles
         DriftSqlType.string,
         data['${effectivePrefix}uid'],
       )!,
-      email: attachedDatabase.typeMapping.read(
+      nationality: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}email'],
+        data['${effectivePrefix}nationality'],
       )!,
-      displayName: attachedDatabase.typeMapping.read(
+      investorProfile: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
-        data['${effectivePrefix}display_name'],
-      ),
-      photoUrl: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}photo_url'],
-      ),
-      isEmailVerified: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_email_verified'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
+        data['${effectivePrefix}investor_profile'],
       )!,
     );
   }
@@ -188,47 +116,27 @@ class $UserProfilesTable extends UserProfiles
 
 class UserProfile extends DataClass implements Insertable<UserProfile> {
   final String uid;
-  final String email;
-  final String? displayName;
-  final String? photoUrl;
-  final bool isEmailVerified;
-  final DateTime createdAt;
+  final String nationality;
+  final String investorProfile;
   const UserProfile({
     required this.uid,
-    required this.email,
-    this.displayName,
-    this.photoUrl,
-    required this.isEmailVerified,
-    required this.createdAt,
+    required this.nationality,
+    required this.investorProfile,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['uid'] = Variable<String>(uid);
-    map['email'] = Variable<String>(email);
-    if (!nullToAbsent || displayName != null) {
-      map['display_name'] = Variable<String>(displayName);
-    }
-    if (!nullToAbsent || photoUrl != null) {
-      map['photo_url'] = Variable<String>(photoUrl);
-    }
-    map['is_email_verified'] = Variable<bool>(isEmailVerified);
-    map['created_at'] = Variable<DateTime>(createdAt);
+    map['nationality'] = Variable<String>(nationality);
+    map['investor_profile'] = Variable<String>(investorProfile);
     return map;
   }
 
   UserProfilesCompanion toCompanion(bool nullToAbsent) {
     return UserProfilesCompanion(
       uid: Value(uid),
-      email: Value(email),
-      displayName: displayName == null && nullToAbsent
-          ? const Value.absent()
-          : Value(displayName),
-      photoUrl: photoUrl == null && nullToAbsent
-          ? const Value.absent()
-          : Value(photoUrl),
-      isEmailVerified: Value(isEmailVerified),
-      createdAt: Value(createdAt),
+      nationality: Value(nationality),
+      investorProfile: Value(investorProfile),
     );
   }
 
@@ -239,11 +147,8 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return UserProfile(
       uid: serializer.fromJson<String>(json['uid']),
-      email: serializer.fromJson<String>(json['email']),
-      displayName: serializer.fromJson<String?>(json['displayName']),
-      photoUrl: serializer.fromJson<String?>(json['photoUrl']),
-      isEmailVerified: serializer.fromJson<bool>(json['isEmailVerified']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      nationality: serializer.fromJson<String>(json['nationality']),
+      investorProfile: serializer.fromJson<String>(json['investorProfile']),
     );
   }
   @override
@@ -251,41 +156,29 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'uid': serializer.toJson<String>(uid),
-      'email': serializer.toJson<String>(email),
-      'displayName': serializer.toJson<String?>(displayName),
-      'photoUrl': serializer.toJson<String?>(photoUrl),
-      'isEmailVerified': serializer.toJson<bool>(isEmailVerified),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'nationality': serializer.toJson<String>(nationality),
+      'investorProfile': serializer.toJson<String>(investorProfile),
     };
   }
 
   UserProfile copyWith({
     String? uid,
-    String? email,
-    Value<String?> displayName = const Value.absent(),
-    Value<String?> photoUrl = const Value.absent(),
-    bool? isEmailVerified,
-    DateTime? createdAt,
+    String? nationality,
+    String? investorProfile,
   }) => UserProfile(
     uid: uid ?? this.uid,
-    email: email ?? this.email,
-    displayName: displayName.present ? displayName.value : this.displayName,
-    photoUrl: photoUrl.present ? photoUrl.value : this.photoUrl,
-    isEmailVerified: isEmailVerified ?? this.isEmailVerified,
-    createdAt: createdAt ?? this.createdAt,
+    nationality: nationality ?? this.nationality,
+    investorProfile: investorProfile ?? this.investorProfile,
   );
   UserProfile copyWithCompanion(UserProfilesCompanion data) {
     return UserProfile(
       uid: data.uid.present ? data.uid.value : this.uid,
-      email: data.email.present ? data.email.value : this.email,
-      displayName: data.displayName.present
-          ? data.displayName.value
-          : this.displayName,
-      photoUrl: data.photoUrl.present ? data.photoUrl.value : this.photoUrl,
-      isEmailVerified: data.isEmailVerified.present
-          ? data.isEmailVerified.value
-          : this.isEmailVerified,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      nationality: data.nationality.present
+          ? data.nationality.value
+          : this.nationality,
+      investorProfile: data.investorProfile.present
+          ? data.investorProfile.value
+          : this.investorProfile,
     );
   }
 
@@ -293,100 +186,66 @@ class UserProfile extends DataClass implements Insertable<UserProfile> {
   String toString() {
     return (StringBuffer('UserProfile(')
           ..write('uid: $uid, ')
-          ..write('email: $email, ')
-          ..write('displayName: $displayName, ')
-          ..write('photoUrl: $photoUrl, ')
-          ..write('isEmailVerified: $isEmailVerified, ')
-          ..write('createdAt: $createdAt')
+          ..write('nationality: $nationality, ')
+          ..write('investorProfile: $investorProfile')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-    uid,
-    email,
-    displayName,
-    photoUrl,
-    isEmailVerified,
-    createdAt,
-  );
+  int get hashCode => Object.hash(uid, nationality, investorProfile);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is UserProfile &&
           other.uid == this.uid &&
-          other.email == this.email &&
-          other.displayName == this.displayName &&
-          other.photoUrl == this.photoUrl &&
-          other.isEmailVerified == this.isEmailVerified &&
-          other.createdAt == this.createdAt);
+          other.nationality == this.nationality &&
+          other.investorProfile == this.investorProfile);
 }
 
 class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
   final Value<String> uid;
-  final Value<String> email;
-  final Value<String?> displayName;
-  final Value<String?> photoUrl;
-  final Value<bool> isEmailVerified;
-  final Value<DateTime> createdAt;
+  final Value<String> nationality;
+  final Value<String> investorProfile;
   final Value<int> rowid;
   const UserProfilesCompanion({
     this.uid = const Value.absent(),
-    this.email = const Value.absent(),
-    this.displayName = const Value.absent(),
-    this.photoUrl = const Value.absent(),
-    this.isEmailVerified = const Value.absent(),
-    this.createdAt = const Value.absent(),
+    this.nationality = const Value.absent(),
+    this.investorProfile = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   UserProfilesCompanion.insert({
     required String uid,
-    required String email,
-    this.displayName = const Value.absent(),
-    this.photoUrl = const Value.absent(),
-    this.isEmailVerified = const Value.absent(),
-    required DateTime createdAt,
+    required String nationality,
+    required String investorProfile,
     this.rowid = const Value.absent(),
   }) : uid = Value(uid),
-       email = Value(email),
-       createdAt = Value(createdAt);
+       nationality = Value(nationality),
+       investorProfile = Value(investorProfile);
   static Insertable<UserProfile> custom({
     Expression<String>? uid,
-    Expression<String>? email,
-    Expression<String>? displayName,
-    Expression<String>? photoUrl,
-    Expression<bool>? isEmailVerified,
-    Expression<DateTime>? createdAt,
+    Expression<String>? nationality,
+    Expression<String>? investorProfile,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
       if (uid != null) 'uid': uid,
-      if (email != null) 'email': email,
-      if (displayName != null) 'display_name': displayName,
-      if (photoUrl != null) 'photo_url': photoUrl,
-      if (isEmailVerified != null) 'is_email_verified': isEmailVerified,
-      if (createdAt != null) 'created_at': createdAt,
+      if (nationality != null) 'nationality': nationality,
+      if (investorProfile != null) 'investor_profile': investorProfile,
       if (rowid != null) 'rowid': rowid,
     });
   }
 
   UserProfilesCompanion copyWith({
     Value<String>? uid,
-    Value<String>? email,
-    Value<String?>? displayName,
-    Value<String?>? photoUrl,
-    Value<bool>? isEmailVerified,
-    Value<DateTime>? createdAt,
+    Value<String>? nationality,
+    Value<String>? investorProfile,
     Value<int>? rowid,
   }) {
     return UserProfilesCompanion(
       uid: uid ?? this.uid,
-      email: email ?? this.email,
-      displayName: displayName ?? this.displayName,
-      photoUrl: photoUrl ?? this.photoUrl,
-      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
-      createdAt: createdAt ?? this.createdAt,
+      nationality: nationality ?? this.nationality,
+      investorProfile: investorProfile ?? this.investorProfile,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -397,20 +256,11 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
     if (uid.present) {
       map['uid'] = Variable<String>(uid.value);
     }
-    if (email.present) {
-      map['email'] = Variable<String>(email.value);
+    if (nationality.present) {
+      map['nationality'] = Variable<String>(nationality.value);
     }
-    if (displayName.present) {
-      map['display_name'] = Variable<String>(displayName.value);
-    }
-    if (photoUrl.present) {
-      map['photo_url'] = Variable<String>(photoUrl.value);
-    }
-    if (isEmailVerified.present) {
-      map['is_email_verified'] = Variable<bool>(isEmailVerified.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
+    if (investorProfile.present) {
+      map['investor_profile'] = Variable<String>(investorProfile.value);
     }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
@@ -422,11 +272,8 @@ class UserProfilesCompanion extends UpdateCompanion<UserProfile> {
   String toString() {
     return (StringBuffer('UserProfilesCompanion(')
           ..write('uid: $uid, ')
-          ..write('email: $email, ')
-          ..write('displayName: $displayName, ')
-          ..write('photoUrl: $photoUrl, ')
-          ..write('isEmailVerified: $isEmailVerified, ')
-          ..write('createdAt: $createdAt, ')
+          ..write('nationality: $nationality, ')
+          ..write('investorProfile: $investorProfile, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -450,21 +297,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 typedef $$UserProfilesTableCreateCompanionBuilder =
     UserProfilesCompanion Function({
       required String uid,
-      required String email,
-      Value<String?> displayName,
-      Value<String?> photoUrl,
-      Value<bool> isEmailVerified,
-      required DateTime createdAt,
+      required String nationality,
+      required String investorProfile,
       Value<int> rowid,
     });
 typedef $$UserProfilesTableUpdateCompanionBuilder =
     UserProfilesCompanion Function({
       Value<String> uid,
-      Value<String> email,
-      Value<String?> displayName,
-      Value<String?> photoUrl,
-      Value<bool> isEmailVerified,
-      Value<DateTime> createdAt,
+      Value<String> nationality,
+      Value<String> investorProfile,
       Value<int> rowid,
     });
 
@@ -482,28 +323,13 @@ class $$UserProfilesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get email => $composableBuilder(
-    column: $table.email,
+  ColumnFilters<String> get nationality => $composableBuilder(
+    column: $table.nationality,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get displayName => $composableBuilder(
-    column: $table.displayName,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get photoUrl => $composableBuilder(
-    column: $table.photoUrl,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isEmailVerified => $composableBuilder(
-    column: $table.isEmailVerified,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
+  ColumnFilters<String> get investorProfile => $composableBuilder(
+    column: $table.investorProfile,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -522,28 +348,13 @@ class $$UserProfilesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get email => $composableBuilder(
-    column: $table.email,
+  ColumnOrderings<String> get nationality => $composableBuilder(
+    column: $table.nationality,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get displayName => $composableBuilder(
-    column: $table.displayName,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get photoUrl => $composableBuilder(
-    column: $table.photoUrl,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get isEmailVerified => $composableBuilder(
-    column: $table.isEmailVerified,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
+  ColumnOrderings<String> get investorProfile => $composableBuilder(
+    column: $table.investorProfile,
     builder: (column) => ColumnOrderings(column),
   );
 }
@@ -560,24 +371,15 @@ class $$UserProfilesTableAnnotationComposer
   GeneratedColumn<String> get uid =>
       $composableBuilder(column: $table.uid, builder: (column) => column);
 
-  GeneratedColumn<String> get email =>
-      $composableBuilder(column: $table.email, builder: (column) => column);
-
-  GeneratedColumn<String> get displayName => $composableBuilder(
-    column: $table.displayName,
+  GeneratedColumn<String> get nationality => $composableBuilder(
+    column: $table.nationality,
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get photoUrl =>
-      $composableBuilder(column: $table.photoUrl, builder: (column) => column);
-
-  GeneratedColumn<bool> get isEmailVerified => $composableBuilder(
-    column: $table.isEmailVerified,
+  GeneratedColumn<String> get investorProfile => $composableBuilder(
+    column: $table.investorProfile,
     builder: (column) => column,
   );
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
 }
 
 class $$UserProfilesTableTableManager
@@ -612,37 +414,25 @@ class $$UserProfilesTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> uid = const Value.absent(),
-                Value<String> email = const Value.absent(),
-                Value<String?> displayName = const Value.absent(),
-                Value<String?> photoUrl = const Value.absent(),
-                Value<bool> isEmailVerified = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
+                Value<String> nationality = const Value.absent(),
+                Value<String> investorProfile = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => UserProfilesCompanion(
                 uid: uid,
-                email: email,
-                displayName: displayName,
-                photoUrl: photoUrl,
-                isEmailVerified: isEmailVerified,
-                createdAt: createdAt,
+                nationality: nationality,
+                investorProfile: investorProfile,
                 rowid: rowid,
               ),
           createCompanionCallback:
               ({
                 required String uid,
-                required String email,
-                Value<String?> displayName = const Value.absent(),
-                Value<String?> photoUrl = const Value.absent(),
-                Value<bool> isEmailVerified = const Value.absent(),
-                required DateTime createdAt,
+                required String nationality,
+                required String investorProfile,
                 Value<int> rowid = const Value.absent(),
               }) => UserProfilesCompanion.insert(
                 uid: uid,
-                email: email,
-                displayName: displayName,
-                photoUrl: photoUrl,
-                isEmailVerified: isEmailVerified,
-                createdAt: createdAt,
+                nationality: nationality,
+                investorProfile: investorProfile,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

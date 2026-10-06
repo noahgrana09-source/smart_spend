@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
+
 /// Platform detection and adaptive widget selection utilities.
 ///
 /// Decides between Cupertino (iOS) and Material (Android) widgets
@@ -17,8 +19,13 @@ import 'dart:io';
 /// }
 /// ```
 abstract final class PlatformUtils {
+  /// Test-only: forces [isIOS] so the Cupertino branches can be exercised
+  /// on a host that isn't iOS. Leave `null` in production code.
+  @visibleForTesting
+  static bool? isIOSOverride;
+
   /// `true` if the app is running on iOS.
-  static bool get isIOS => Platform.isIOS;
+  static bool get isIOS => isIOSOverride ?? Platform.isIOS;
 
   /// `true` if the app is running on Android.
   static bool get isAndroid => Platform.isAndroid;

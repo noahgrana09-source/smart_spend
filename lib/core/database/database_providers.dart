@@ -20,8 +20,9 @@ AppDatabase appDatabase(Ref ref) {
   return db;
 }
 
-/// DAO for the cached user profile, off [appDatabaseProvider]. Consumed
-/// only by `features/auth`'s datasource wiring.
+/// DAO for the cached onboarding profile (nationality + investor
+/// profile), off [appDatabaseProvider]. Consumed only by
+/// `features/onboarding`'s datasource wiring.
 @Riverpod(keepAlive: true)
 UserProfileDao userProfileDao(Ref ref) =>
     ref.watch(appDatabaseProvider).userProfileDao;

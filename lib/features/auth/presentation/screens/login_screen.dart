@@ -9,9 +9,9 @@ import '../auth_utils/auth_messages.dart';
 import '../auth_utils/auth_validators.dart';
 import '../providers/auth_notifier.dart';
 import '../providers/auth_state.dart';
-import '../widgets/auth_error_banner.dart';
+import '../../../../core/widgets/app_error_banner.dart';
 import '../widgets/auth_mode_link.dart';
-import '../widgets/auth_primary_button.dart';
+import '../../../../core/widgets/main_app_button.dart';
 import '../widgets/auth_text_field.dart';
 import '../widgets/form_scaffold.dart';
 import '../widgets/google_sign_in_button.dart';
@@ -133,7 +133,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              AuthErrorBanner(message: generalError),
+              AppErrorBanner(message: generalError),
               if (generalError != null) const SizedBox(height: 16),
               AuthTextField(
                 controller: _emailController,
@@ -170,7 +170,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 },
               ),
               const SizedBox(height: 24),
-              AuthPrimaryButton(
+              MainAppButton(
                 label: l10n.authSignInButton,
                 onPressed: isLoading ? null : _submitEmail,
                 isLoading: isLoading,

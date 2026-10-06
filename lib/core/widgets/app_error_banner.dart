@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Inline banner for a general submit failure ([AuthErrorKind.general]).
-/// Renders nothing when [message] is null, so the screen can bind it
-/// straight to the notifier state without a conditional.
-class AuthErrorBanner extends StatelessWidget {
-  const AuthErrorBanner({super.key, this.message});
+/// Inline banner for a general submit/operation failure, shared across
+/// every feature. Renders nothing when [message] is null, so a screen
+/// can bind it straight to its notifier state without a conditional.
+class AppErrorBanner extends StatelessWidget {
+  const AppErrorBanner({super.key, this.message});
 
   final String? message;
 

@@ -165,34 +165,6 @@ void main() {
       });
     });
 
-    group('toDriftCompanion', () {
-      test('should map every field into the companion', () {
-        final companion = tUserModel.toDriftCompanion();
-
-        expect(companion.uid.value, '123');
-        expect(companion.email.value, 'test@example.com');
-        expect(companion.displayName.value, 'Test User');
-        expect(companion.photoUrl.value, 'https://photo.url');
-        expect(companion.isEmailVerified.value, true);
-        expect(companion.createdAt.value, tCreatedAt);
-      });
-
-      test('should carry null optional fields as present-but-null', () {
-        final model = UserModel(
-          uid: '456',
-          email: 'user@example.com',
-          createdAt: tCreatedAt,
-        );
-
-        final companion = model.toDriftCompanion();
-
-        expect(companion.displayName.present, true);
-        expect(companion.displayName.value, isNull);
-        expect(companion.photoUrl.present, true);
-        expect(companion.photoUrl.value, isNull);
-      });
-    });
-
     group('equality', () {
       test('should be equal when all fields match', () {
         final model1 = UserModel(

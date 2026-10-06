@@ -67,7 +67,10 @@ class FormScaffold extends ConsumerWidget {
         child: CupertinoPageScaffold(
           // CupertinoNavigationBar centers `middle` by default.
           navigationBar: CupertinoNavigationBar(middle: Text(title)),
-          child: body,
+          // The form's fields are Material `TextFormField`s (see
+          // `AuthTextField`), and they throw without a Material ancestor.
+          // Transparent, so it doesn't change how the Cupertino page looks.
+          child: Material(type: MaterialType.transparency, child: body),
         ),
       );
     }

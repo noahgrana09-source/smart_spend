@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'app_text_styles.dart';
@@ -28,5 +29,14 @@ abstract final class AppTheme {
   static ThemeData get dark => ThemeData(
     colorScheme: _darkScheme,
     textTheme: AppTextStyles.textTheme,
+  );
+
+  /// Cupertino widgets (iOS branches) ignore the Material [ThemeData] and
+  /// fall back to Cupertino's own system blue and background. This mirrors
+  /// the active Material theme so buttons and page backgrounds match Android.
+  static CupertinoThemeData cupertino(ThemeData theme) => CupertinoThemeData(
+    brightness: theme.brightness,
+    primaryColor: theme.colorScheme.primary,
+    scaffoldBackgroundColor: theme.colorScheme.surface,
   );
 }

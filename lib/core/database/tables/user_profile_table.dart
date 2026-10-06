@@ -1,17 +1,15 @@
 import 'package:drift/drift.dart';
 
-/// Local cache of the signed-in user's profile. Mirrors the Firestore
-/// `users/{uid}` document — written on every successful sign-in/up (see
-/// `AuthRepositoryImpl`), though nothing reads it back yet. Only ever
-/// holds the single row for whoever is currently signed in on this
-/// device; `AuthLocalDataSource.clear()` empties it on sign-out.
+/// Local cache of the signed-in user's onboarding data (nationality +
+/// investor profile), keyed by their Firebase Auth `uid`. Written by
+/// `OnbLocalDataSourceImpl.saveData` and never by `auth` — `auth`
+/// deliberately keeps no local persistence of its own (see
+/// `AuthRepositoryImpl`'s doc comment). Only ever holds the single row for
+/// whoever is currently signed in on this device.
 class UserProfiles extends Table {
   TextColumn get uid => text()();
-  TextColumn get email => text()();
-  TextColumn get displayName => text().nullable()();
-  TextColumn get photoUrl => text().nullable()();
-  BoolColumn get isEmailVerified => boolean().withDefault(const Constant(false))();
-  DateTimeColumn get createdAt => dateTime()();
+  TextColumn get nationality => text()();
+  TextColumn get investorProfile => text()();
 
   @override
   Set<Column> get primaryKey => {uid};

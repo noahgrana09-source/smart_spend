@@ -1,15 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../core/utils/platform_utils.dart';
-import '../../../../core/widgets/adaptive_progress_indicator.dart';
+import '../utils/platform_utils.dart';
+import 'adaptive_progress_indicator.dart';
 
-/// Full-width primary action button. [CupertinoButton.filled] on iOS,
-/// [FilledButton] on Android. Shows a spinner in place of [label] while
-/// [isLoading], and is non-interactive while loading or when [onPressed]
-/// is null.
-class AuthPrimaryButton extends StatelessWidget {
-  const AuthPrimaryButton({
+/// Full-width primary action button, shared across every feature.
+/// [CupertinoButton.filled] on iOS, [FilledButton] on Android. Shows a
+/// spinner in place of [label] while [isLoading], and is non-interactive
+/// while loading or when [onPressed] is null.
+class MainAppButton extends StatelessWidget {
+  const MainAppButton({
     super.key,
     required this.label,
     required this.onPressed,
