@@ -22,10 +22,13 @@ USD 9.99 unlock (Stripe) after 3 free LLM queries.
 - **Dual persistence** — `lib/core/database/sync_repository.dart` is the
   intended contract for a feature whose data it owns/produces itself:
   Drift/SQLite as the local source of truth for reads, Firestore as the
-  remote copy for backup and multi-device sync. `onboarding` is meant to
-  be the first real user of it (risk profile, nationality — non-sensitive,
+  remote copy for backup and multi-device sync. `onboarding` is the first
+  real user of the local side (risk profile, nationality — non-sensitive,
   app-produced, read on nearly every screen, so local-first pays for
-  itself). `auth` deliberately opts out: Firebase Auth/Firestore are
+  itself): its `UserProfiles` row is keyed by the Firebase `uid` and
+  written/read through `UserProfileDao`. The Firestore push and the
+  reconciliation strategy aren't implemented yet — onboarding currently
+  writes Drift only. `auth` deliberately opts out: Firebase Auth/Firestore are
   themselves the only source of truth for a session, and its profile
   fields are sensitive enough that caching them in an unencrypted local
   database isn't worth it for a feature with no current reader — see
@@ -34,6 +37,13 @@ USD 9.99 unlock (Stripe) after 3 free LLM queries.
   `onboarding` to build on rather than pulled in as auth-specific.
 - **Adaptive UI** — presentation widgets detect the OS and render Material
   or Cupertino; where Cupertino has no equivalent, Material imitates it.
+  Cupertino widgets ignore the Material `ThemeData`, so on iOS they'd fall
+  back to Cupertino's system blue and background. `AppTheme.cupertino`
+  derives a `CupertinoThemeData` from the active Material theme, and
+  `MaterialApp.router`'s builder (`lib/main.dart`) wraps the app in it.
+  Material inputs (`TextFormField`) also need a Material ancestor, which
+  Cupertino pages don't provide — `FormScaffold` adds a transparent
+  `Material` around its body on iOS for that reason.
 - **Adaptive theme** — `AppTheme` (`lib/core/theme/app_theme.dart`) builds a
   `light` and a `dark` `ThemeData` from the same
   `ColorScheme.fromSeed(seedColor: brandGreen)`, one per `Brightness`,
@@ -59,6 +69,7 @@ smart_spend/
 ├── lib/
 │   ├── core/               # see "Core" section right below for what's in each
 │   │   ├── database/
+│   │   ├── entities/      # shared across features (AppUserEntity, OnbDataEntity)
 │   │   ├── env/
 │   │   ├── error/
 │   │   ├── network/
@@ -73,9 +84,9 @@ smart_spend/
 │   │   ├── ai_advisor/    # not started
 │   │   ├── auth/          # done — see "Features → auth" below
 │   │   ├── market/        # not started
-│   │   ├── onboarding/    # placeholder screen only
+│   │   ├── onboarding/    # done — see "Features → onboarding" below
 │   │   ├── payment/       # not started (Stripe backend already deployed)
-│   │   └── portfolio/     # placeholder screen only
+│   │   └── portfolio/     # temporary debug Home only
 │   ├── l10n/              # es/en ARB bundle + gen/
 │   ├── firebase_options.dart
 │   └── main.dart          # bootstrap only — see Architecture above
@@ -90,13 +101,17 @@ smart_spend/
 
 ## Core (`lib/core/`)
 
-`env` (typed `.env` access) · `error` (`Failure` hierarchy) · `network`
-(`dio` client + `DioException → Failure` mapper) · `router` (state-driven
-`go_router`) · `state` (`AppState` / `PaymentState` + notifiers) · `theme`
-(`AppTheme`, brand green `0xFF0E9F6E`) · `usecases` (base contracts) ·
-`utils` (platform detection) · `widgets` (shared adaptive widgets:
-`AdaptiveProgressIndicator`, `LoadingOverlay`) · `database` (`AppDatabase`,
-DAOs/tables, `SyncRepository`).
+`env` (typed `.env` access) · `entities` (domain entities read by more than
+one feature: `AppUserEntity`, `OnbDataEntity`) · `error` (`Failure`
+hierarchy, incl. `DatabaseFailure`) · `network` (`dio` client +
+`DioException → Failure` mapper) · `router` (state-driven `go_router`) ·
+`state` (`AppState` / `PaymentState` + notifiers) · `theme` (`AppTheme`,
+brand green `0xFF0E9F6E`, plus the Cupertino mirror `AppTheme.cupertino`)
+· `usecases` (base contracts) · `utils` (platform detection, with a
+test-only `isIOSOverride` seam) · `widgets` (shared adaptive widgets:
+`AdaptiveProgressIndicator`, `LoadingOverlay`, `MainAppButton`,
+`AppErrorBanner`) · `database` (`AppDatabase`, DAOs/tables incl.
+`UserProfileDao`, `SyncRepository`).
 
 ## Features (`lib/features/`)
 
@@ -145,10 +160,8 @@ auth/
     │   ├── email_verification_screen.dart
     │   ├── login_screen.dart
     │   └── register_screen.dart
-    └── widgets/              # adaptive
-        ├── auth_error_banner.dart
+    └── widgets/              # adaptive (shared button/error banner live in core/widgets/)
         ├── auth_mode_link.dart
-        ├── auth_primary_button.dart
         ├── auth_text_field.dart
         ├── form_scaffold.dart
         ├── google_sign_in_button.dart
@@ -203,6 +216,12 @@ auth/
   `loading`/`error` are deliberately ignored so a screen already showing
   never gets ripped away mid-action (e.g. while one of
   `EmailVerificationScreen`'s own buttons is in flight).
+- **iOS branch needs a Material ancestor for its fields** — `FormScaffold`
+  renders a `CupertinoPageScaffold` on iOS, but `AuthTextField` is a Material
+  `TextFormField`, which throws ("No Material widget found") without one.
+  The Cupertino body is wrapped in a transparent `Material`. The host
+  never takes this branch in tests, so `form_scaffold_ios_test.dart` forces
+  it through `PlatformUtils.isIOSOverride`.
 - **`RegisterScreen`/`EmailVerificationScreen` aren't routes** — both are
   `Navigator.push`ed (adaptive page route) on top of whatever `AuthWrapper`
   is currently showing; the state-driven router only knows `/login`,
@@ -266,24 +285,130 @@ auth/
 `flutter_svg` (Google mark, inlined), `lottie` (`FormScaffold`'s header
 animation), `mocktail` (tests).
 
-### onboarding, portfolio, account, ai_advisor, market, payment
+### onboarding — done (domain + data + presentation)
 
-Not started (onboarding and portfolio have a placeholder screen). The
-Stripe backend for `payment` is already deployed — see
+Collects the user's nationality and investor risk profile after sign-in,
+then persists both locally and advances `AppState` to `onboarded`.
+
+**Flow**
+1. `OnbWrapper` (`/onboarding`'s boot gate, same shape as `AuthWrapper`)
+   checks for an existing `UserProfiles` row for the current `uid`. If one
+   exists it advances `AppState` to `onboarded` straight away; otherwise it
+   shows `GetYouStartedScreen`.
+2. `GetYouStartedScreen` greets the user by name (`AppUserEntity`, via
+   `GetCurrentUserUseCase`), shows a one-shot Lottie, and `pushReplacement`s
+   to the next screen — nothing to go back to.
+3. `PickNationalityScreen` — `OnbAdaptiveDropdown` fed by `country_picker`'s
+   `CountryService` (used for its country data only, not its picker UI).
+   "Next" stays disabled until a country is picked, then `push`es to the
+   next screen so the user can go back.
+4. `InvestorTestScreen` — five `OnbQuestionCard`s. Each option carries an
+   integer risk point (1 = lowest, 4 = highest). A single-choice answer
+   contributes its point; a multi-choice answer contributes the *average* of
+   its selected points, so it stays on the same per-question scale. The
+   overall score is the mean of the per-question averages, bucketed into
+   three equal thirds: `conservative` ≤ 2 < `moderate` ≤ 3 < `aggressive`.
+   The bucket is stored as a stable English code, not the localized label,
+   because it's persisted and read by other features. The time-horizon
+   question is deliberately inverted (a short horizon scores higher).
+5. `OnbNotifier.submitSaveData` saves the nationality and profile
+   (`SaveDataUseCase` → `OnbRepositoryImpl` → `OnbLocalDataSourceImpl` →
+   `UserProfileDao`) and advances `AppState` to `onboarded`.
+
+**Distribution**
+- `domain/` — `OnbRepository` (`saveData`, `getCurrentUser`,
+  `getLocalData`) and the use cases (`SaveDataUseCase`,
+  `GetCurrentUserUseCase`, `GetLocalDataUseCase`). `getLocalData` returns
+  `null`, not a `Failure`, when no row exists yet — that's the normal
+  "not onboarded on this device" state.
+- `data/` — `OnbLocalDataSourceImpl` (resolves the `uid` from
+  `FirebaseAuth.currentUser` and goes through `UserProfileDao`; it has no
+  Firebase Auth dependency beyond that), `OnbDataModel`, `OnbUserModel`,
+  `OnbRepositoryImpl`.
+- `presentation/` — `providers/` (`onb_providers.dart`: the DI wiring;
+  `onb_notifier.dart`: `OnbNotifier`, the only piece that owns state
+  transitions; `onb_state.dart`), `screens/`, `widgets/`
+  (`OnbAdaptiveDropdown`, `OnbQuestionCard`).
+- Shared entities live in `core/entities/` — `OnbDataEntity` and
+  `AppUserEntity` — because `portfolio` reads them too.
+
+**Technical decisions**
+- `onboarding` doesn't import `auth`. It resolves `FirebaseAuth.instance`
+  through its own provider, the same way it's duplicated elsewhere to keep
+  features independent. Boot-time decisions stay in each feature's wrapper
+  (`AuthWrapper`, `OnbWrapper`), not in `main()`.
+- The `UserProfiles` table is keyed by `uid` and holds only `nationality` and
+  `investorProfile`. Its schema was changed in place, so a device that
+  already has the old table needs its app data cleared — the schema version
+  wasn't bumped and there's no migration, which is fine while nothing has
+  shipped.
+- `DatabaseFailure` (local Drift errors) and `AuthFailure` are kept apart on
+  purpose: the first is a persistence failure, the second is about the Firebase
+  session.
+
+**Temporary debug Home (`portfolio`)**
+`portfolio`'s `HomeScreen` is a stand-in until the real home exists. It reads
+back the signed-in user's `UserProfiles` row through
+`GetLocalDataUseCase` to confirm the local database works end to end, and has
+a "Log out" button: it awaits `FirebaseAuth.signOut()`, fires the Google
+sign-out in the background, and sets `AppState` to `unauthenticated`.
+
+**Stack**: `drift` (local profile), `country_picker` (country data),
+`lottie` (`GetYouStartedScreen`'s animation).
+
+### account, ai_advisor, market, payment
+
+Not started. The Stripe backend for `payment` is already deployed — see
 `functions/src/index.ts` and `context/CLAUDE.md`.
 
 ## Testing
 
-`flutter test`. Coverage so far: the whole `auth` domain/data suite, plus
-`presentation` (validators, password strength, `AuthNotifier` state
-transitions including `verifying`/`resumeVerifying`, and widget tests for
-every screen — including `AuthWrapper` itself and a dedicated integration
-test that pumps `AuthWrapper` → `LoginScreen` → `RegisterScreen` end to
-end to catch cross-widget navigation bugs unit tests in isolation would
-miss). Also `test/core/router/` for the state-driven router/
-`AppStateListener`. Widget tests exercise the Material branch only —
-`PlatformUtils` reads `dart:io Platform`, so
-`debugDefaultTargetPlatformOverride` doesn't flip it to Cupertino.
+`flutter test` runs unit and widget tests on the host. Coverage so far:
+the whole `auth` domain/data suite, plus `presentation` (validators,
+password strength, `AuthNotifier` state transitions including
+`verifying`/`resumeVerifying`, and widget tests for every screen —
+including `AuthWrapper` itself and a widget-level flow test that pumps
+`AuthWrapper` → `LoginScreen` → `RegisterScreen` end to end). `onboarding`
+has unit tests for its use cases and widget tests for its wrapper and
+every screen. `test/core/router/` covers the state-driven router and
+`AppStateListener`, and `test/core/theme/` covers the Cupertino theme
+mirror.
+
+`PlatformUtils` reads `dart:io Platform`, which the host can't override,
+so tests that need the iOS branch set `PlatformUtils.isIOSOverride = true`
+(`@visibleForTesting`, `null` in production). Keep this in mind when
+adding a Cupertino-specific branch: a test that doesn't set it only ever
+exercises the Material branch.
+
+### Integration test against the Firebase Local Emulator Suite
+
+`integration_test/auth_signup_verify_test.dart` runs the real app on an
+Android emulator against the Firebase Auth and Firestore emulators: sign
+up, verify the email, land on onboarding. No real inbox is involved — the
+test reads the pending verification `oobCode` from the Auth emulator's REST
+API and applies it, the same `accounts:update` call `applyActionCode` makes.
+
+Setup and run:
+1. Start the emulators (`firebase.json`'s `emulators` block: Auth on 9099,
+   Firestore on 8080, UI on 4000): `firebase emulators:start --only
+   auth,firestore`.
+2. Start an Android emulator. On this machine, `-gpu swiftshader_indirect`
+   was the only mode that stayed up; GPU passthrough and `hw.gpu.enabled =
+   no` crashed the emulator once the app started rendering.
+3. Run: `flutter test integration_test/auth_signup_verify_test.dart -d
+   <device_id> --dart-define=USE_FIREBASE_EMULATOR=true`.
+
+The `--dart-define` is what connects `main.dart` to the emulators
+(`useAuthEmulator` / `useFirestoreEmulator`). It's never set in a real
+build. `android/app/src/debug/` carries a `network_security_config.xml` that
+allows cleartext HTTP to `10.0.2.2` and `localhost`, because the emulator
+serves plain HTTP — that override lives under `src/debug/` only, so release
+builds never get it.
+
+Two rules the test relies on: it waits for the expected screen to appear
+(`_waitFor`), not for a fixed number of frames, because the Lottie headers
+loop and `pumpAndSettle` would never return; and it scopes text lookups to
+the target screen, since a popped route can still be mid-transition.
 
 ## License
 
